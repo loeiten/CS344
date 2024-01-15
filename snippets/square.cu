@@ -11,7 +11,7 @@ __global__ void square(float* d_out, float* d_in) {
   d_out[idx] = f * f;
 }
 
-int main(int argc, char** argv) {
+int main() {
   const int ARRAY_BYTES = ARRAY_SIZE * sizeof(float);
 
   // Generate the input array on the host

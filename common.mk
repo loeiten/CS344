@@ -1,15 +1,28 @@
 
-# C flag options
-CC := clang
-CFLAGS := -g -O0 -std=gnu17
-C_LINT_FLAGS := -Wall -Wextra -Wpedantic -Wfloat-equal -Wundef -Wshadow -Wpointer-arith -Wcast-align -Wstrict-prototypes -Wstrict-overflow=5 -Wwrite-strings -Waggregate-return -Werror
-C_SANITIZERS := -fsanitize=address -fsanitize=undefined
+# Common options
+COMMON_FLAGS := -g -O0 -std=c++17
+COMMON_LINT_FLAGS := -Wall -Wextra -Wfloat-equal -Wundef -Wshadow -Wpointer-arith -Wcast-align -Wstrict-overflow=5 -Wwrite-strings -Waggregate-return -Werror
+
+# CXX flag options
+CXX := clang++
+# NOTE: CUDA is using `compute-sanitizer` instead of UBSAN and ASAN
+# See
+# https://developer.nvidia.com/blog/debugging-cuda-more-efficiently-with-nvidia-compute-sanitizer/
+# for details
+CXX_SANITIZERS := -fsanitize=address -fsanitize=undefined
+# -Wpedandtic throws errors like
+#  error: style of line directive is a GCC extension
+# See
+# https://github.com/NVIDIA/cub/issues/228#issuecomment-741890136
+# https://stackoverflow.com/questions/31000996/warning-when-compiling-cu-with-wpedantic-style-of-line-directive-is-a-gcc-ex
+CXX_LINT_FLAGS := $(COMMON_LINT_FLAGS) -Wpedandtic
 
 # CUDA specifics
 CUDA_VERSION ?= 12.1
 CUDA_ROOT_DIR ?= /usr/local/cuda-$(CUDA_VERSION)
-CUDA_INC_DIR ?= -I$(CUDA_ROOT_DIR)/include
-CUDA_LIB_DIR ?= -I$(CUDA_ROOT_DIR)/lib64
+# We do not use -I to declare that these are system headers
+CUDA_INC_DIR ?= -isystem $(CUDA_ROOT_DIR)/include
+CUDA_LIB_DIR ?= -L$(CUDA_ROOT_DIR)/lib64
 
 NVCC := $(CUDA_ROOT_DIR)/bin/nvcc
 

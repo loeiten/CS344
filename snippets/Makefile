@@ -22,11 +22,13 @@ all: $(SNIPPETS_EXEC_FILES)
 # them as intermediate
 .SECONDARY: $(SNIPPETS_OBJ_FILES)
 
+CUDA_LIBS := -lcudadevrt -lcudart_static
+
 # Build the executables, one by one
 $(EXEC_DIR)/snippets% : $(BUILD_OBJ_DIR)/snippets%.o
 	$(call explain_build,Building and linking the binary: $@)
 	mkdir -p $(SNIPPETS_EXEC_DIR)
-	$(NVCC) $(CUDA_INCL) $(CUDA_LIB) --compiler-options "$(COMMON_LINT_FLAGS)" $< -o $@
+	$(NVCC) $(CUDA_INCL) $(CUDA_LD_LIB) $(CUDA_LIBS) --compiler-options "$(COMMON_LINT_FLAGS)" $< -o $@
 
 # Build the object file, one by one
 # NOTE: We include the CUDA_INCL as this includes the system headers and

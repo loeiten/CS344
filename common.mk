@@ -21,7 +21,7 @@ CUDA_VERSION ?= 12.1
 CUDA_ROOT_DIR ?= /usr/local/cuda-$(CUDA_VERSION)
 # We do not use -I to declare that these are system headers
 CUDA_INCL ?= -isystem $(CUDA_ROOT_DIR)/include
-CUDA_LIB ?= -L$(CUDA_ROOT_DIR)/lib64
+CUDA_LD_LIB ?= -L$(CUDA_ROOT_DIR)/lib64
 # NOTE: For optimized code use -O3 togehter with -arch flags
 #       See
 #       https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/
@@ -33,7 +33,7 @@ NVCC := $(CUDA_ROOT_DIR)/bin/nvcc
 # OpenCV specifics
 OPENCV_ROOT_DIR ?= /usr
 OPENCV_INCL := -isystem $(OPENCV_ROOT_DIR)/include
-OPENCV_LIB := -L$(OPENCV_ROOT_DIR)/lib64
+OPENCV_LD_LIB := -L$(OPENCV_ROOT_DIR)/lib64
 
 # Setting up the paths
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))

@@ -1,37 +1,27 @@
-#ifndef GPU_TIMER_H__
-#define GPU_TIMER_H__
+#ifndef PROBLEM_SETS_SET_1_INCLUDE_TIMER_HPP_
+#define PROBLEM_SETS_SET_1_INCLUDE_TIMER_HPP_
 
 #include <cuda_runtime.h>
 
-struct GpuTimer
-{
+struct GpuTimer {
   cudaEvent_t start;
   cudaEvent_t stop;
 
-  GpuTimer()
-  {
+  GpuTimer() {
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
   }
 
-  ~GpuTimer()
-  {
+  ~GpuTimer() {
     cudaEventDestroy(start);
     cudaEventDestroy(stop);
   }
 
-  void Start()
-  {
-    cudaEventRecord(start, 0);
-  }
+  void Start() { cudaEventRecord(start, 0); }
 
-  void Stop()
-  {
-    cudaEventRecord(stop, 0);
-  }
+  void Stop() { cudaEventRecord(stop, 0); }
 
-  float Elapsed()
-  {
+  float Elapsed() {
     float elapsed;
     cudaEventSynchronize(stop);
     cudaEventElapsedTime(&elapsed, start, stop);
@@ -39,4 +29,4 @@ struct GpuTimer
   }
 };
 
-#endif  /* GPU_TIMER_H__ */
+#endif  // PROBLEM_SETS_SET_1_INCLUDE_TIMER_HPP_

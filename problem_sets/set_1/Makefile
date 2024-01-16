@@ -1,54 +1,48 @@
-NVCC=nvcc
+include ../../common.mk
 
-###################################
-# These are the default install   #
-# locations on most linux distros #
-###################################
+SET_1_SRC_DIR := $(ROOT_DIR)/problem_sets/set_1/src
+SET_1_INCL_DIR := $(ROOT_DIR)/problem_sets/set_1/include
 
-OPENCV_LIBPATH=/usr/lib
-OPENCV_INCLUDEPATH=/usr/include
+OPENCV_LIBS := -lopencv_core -lopencv_imgproc -lopencv_highgui
 
-###################################################
-# On Macs the default install locations are below #
-###################################################
+.PHONY: all clean
 
-#OPENCV_LIBPATH=/usr/local/lib
-#OPENCV_INCLUDEPATH=/usr/local/include
+all: $(SET_1_EXEC_DIR)/student
 
-# or if using MacPorts
+# FIXME: Why is not HW1 not made an object file of, and why are we including
+#        HW1.cpp directly in main?
+SET_1_OBJ_FILES := $(SET_1_OBJ_DIR)/main.o \
+	$(SET_1_OBJ_DIR)/student_func.o \
+	$(SET_1_OBJ_DIR)/compare.o \
+	$(SET_1_OBJ_DIR)/reference_calc.o
 
-#OPENCV_LIBPATH=/opt/local/lib
-#OPENCV_INCLUDEPATH=/opt/local/include
+# FIXME: Copy the data files
+$(SET_1_EXEC_DIR)/problem_set_1: $(SET_1_OBJ_FILES)
+	$(call explain_build,Building and linking the binary file: $@)
+	mkdir -p $(SET_1_EXEC_DIR)
+	$(NVCC) $(CUDA_INCL) $(CUDA_LIB) $(OPENCV_LIB) $(OPENCV_LIBS) $^ -o $@
 
-OPENCV_LIBS=-lopencv_core -lopencv_imgproc -lopencv_highgui
+# NOTE: The dependencies are explicitly included
+#		Any change in these would result in a different .o file
+$(SET_1_OBJ_DIR)/main.o: $(SET_1_SRC_DIR)/main.cpp $(SET_1_SRC_DIR)/HW1.cpp $(SET_1_INCL_DIR)/timer.hpp $(SET_1_INCL_DIR)/utils.hpp $(SET_1_INCL_DIR)/compare.hpp $(SET_1_INCL_DIR)/reference_calc.hpp
+	$(call explain_build,Building the object file: $@)
+	mkdir -p $(SET_1_OBJ_DIR)
+	$(CXX) $(COMMON_FLAGS) $(CXX_LINT_FLAGS) $(CXX_SANITIZERS) $(OPENCV_INCL) -c $< -o $@
 
-CUDA_INCLUDEPATH=/usr/local/cuda-5.0/include
+$(SET_1_OBJ_DIR)/student_func.o: $(SET_1_SRC_DIR)/student_func.cu $(SET_1_INCL_DIR)/utils.hpp
+	$(call explain_build,Building the object file: $@)
+	mkdir -p $(SET_1_OBJ_DIR)
+	$(NVCC) $(CUDA_INCL) --compiler-options "$(COMMON_LINT_FLAGS)" -c $< -o $@
 
-######################################################
-# On Macs the default install locations are below    #
-# ####################################################
+$(SET_1_OBJ_DIR)/compare.o: $(SET_1_SRC_DIR)/compare.cpp $(SET_1_INCL_DIR)/compare.hpp
+	$(call explain_build,Building the object file: $@)
+	mkdir -p $(SET_1_OBJ_DIR)
+	$(CXX) $(COMMON_FLAGS) $(CXX_LINT_FLAGS) $(CXX_SANITIZERS) $(OPENCV_INCL) -c $< -o $@
 
-#CUDA_INCLUDEPATH=/usr/local/cuda/include
-#CUDA_LIBPATH=/usr/local/cuda/lib
-
-NVCC_OPTS=-O3 -arch=sm_20 -Xcompiler -Wall -Xcompiler -Wextra -m64
-
-GCC_OPTS=-O3 -Wall -Wextra -m64
-
-student: main.o student_func.o compare.o reference_calc.o Makefile
-	$(NVCC) -o HW1 main.o student_func.o compare.o reference_calc.o -L $(OPENCV_LIBPATH) $(OPENCV_LIBS) $(NVCC_OPTS)
-
-main.o: main.cpp timer.h utils.h reference_calc.cpp compare.cpp HW1.cpp
-	g++ -c main.cpp $(GCC_OPTS) -I $(CUDA_INCLUDEPATH) -I $(OPENCV_INCLUDEPATH)
-
-student_func.o: student_func.cu utils.h
-	nvcc -c student_func.cu $(NVCC_OPTS)
-
-compare.o: compare.cpp compare.h
-	g++ -c compare.cpp -I $(OPENCV_INCLUDEPATH) $(GCC_OPTS) -I $(CUDA_INCLUDEPATH)
-
-reference_calc.o: reference_calc.cpp reference_calc.h
-	g++ -c reference_calc.cpp -I $(OPENCV_INCLUDEPATH) $(GCC_OPTS) -I $(CUDA_INCLUDEPATH)
+$(SET_1_OBJ_DIR)/reference_calc.o: $(SET_1_SRC_DIR)/reference_calc.cpp $(SET_1_INCL_DIR)/reference_calc.hpp
+	$(call explain_build,Building the object file: $@)
+	mkdir -p $(SET_1_OBJ_DIR)
+	$(CXX) $(COMMON_FLAGS) $(CXX_LINT_FLAGS) $(CXX_SANITIZERS) $(OPENCV_INCL) $(CUDA_INCL) -c $< -o $@
 
 clean:
-	rm -f *.o *.png hw
+	rm -rf $(SET_1_OBJ_DIR) $(SET_1_EXEC_DIR)

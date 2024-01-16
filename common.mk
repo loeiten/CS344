@@ -1,4 +1,3 @@
-
 # Common options
 COMMON_FLAGS := -g -O0 -std=c++17
 COMMON_LINT_FLAGS := -Wall -Wextra -Wfloat-equal -Wundef -Wshadow -Wpointer-arith -Wcast-align -Wstrict-overflow=5 -Wwrite-strings -Waggregate-return -Werror
@@ -21,17 +20,36 @@ CXX_LINT_FLAGS := $(COMMON_LINT_FLAGS) -Wpedandtic
 CUDA_VERSION ?= 12.1
 CUDA_ROOT_DIR ?= /usr/local/cuda-$(CUDA_VERSION)
 # We do not use -I to declare that these are system headers
-CUDA_INC_DIR ?= -isystem $(CUDA_ROOT_DIR)/include
-CUDA_LIB_DIR ?= -L$(CUDA_ROOT_DIR)/lib64
-
+CUDA_INCL ?= -isystem $(CUDA_ROOT_DIR)/include
+CUDA_LIB ?= -L$(CUDA_ROOT_DIR)/lib64
+# NOTE: For optimized code use -O3 togehter with -arch flags
+#       See
+#       https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/
+#       https://stackoverflow.com/questions/35656294/cuda-how-to-use-arch-and-code-and-sm-vs-compute
+#       PTX is a low-level parallel-thread-execution virtual machine and ISA (Instruction Set Architecture)
+#       SASS (source and assembly) is the low-level assembly language that compiles to binary microcode, which executes natively on NVIDIA GPU hardware.
 NVCC := $(CUDA_ROOT_DIR)/bin/nvcc
+
+# OpenCV specifics
+OPENCV_ROOT_DIR ?= /usr
+OPENCV_INCL := -isystem $(OPENCV_ROOT_DIR)/include
+OPENCV_LIB := -L$(OPENCV_ROOT_DIR)/lib64
 
 # Setting up the paths
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
-CUR_DIR := $(dir $(MKFILE_PATH))
-BUILD_DIR := $(abspath $(CUR_DIR)/build)
+ROOT_DIR := $(dir $(MKFILE_PATH))
+BUILD_DIR := $(abspath $(ROOT_DIR)/build)
 EXEC_DIR := $(abspath $(BUILD_DIR)/bin)
 BUILD_OBJ_DIR := $(abspath $(BUILD_DIR)/obj_files)
+# Snippets
+SNIPPETS_OBJ_DIR := $(abspath $(BUILD_OBJ_DIR)/snippets)
+SNIPPETS_EXEC_DIR := $(abspath $(EXEC_DIR)/snippets)
+# Problem sets
+PROBLEM_SETS_OBJ_DIR := $(abspath $(BUILD_OBJ_DIR)/problem_sets)
+PROBLEM_SETS_EXEC_DIR := $(abspath $(EXEC_DIR)/problem_sets)
+SET_1_OBJ_DIR := $(abspath $(PROBLEM_SETS_OBJ_DIR)/set_1)
+SET_1_EXEC_DIR := $(abspath $(PROBLEM_SETS_EXEC_DIR)/set_1)
+
 
 # Define helper functions
 define explain_build

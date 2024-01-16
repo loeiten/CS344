@@ -2,7 +2,7 @@ include ../common.mk
 
 .PHONY: all clean
 
-SNIPPETS_SRC_FILES := $(wildcard $(CUR_DIR)snippets/*.cu)
+SNIPPETS_SRC_FILES := $(wildcard $(ROOT_DIR)snippets/*.cu)
 SNIPPETS_SRC := $(word 1, $(dir $(SNIPPETS_SRC_FILES)))
 # Remove trailing slash
 SNIPPETS_SRC := $(patsubst %/,%,$(SNIPPETS_SRC))
@@ -25,16 +25,16 @@ all: $(SNIPPETS_EXEC_FILES)
 # Build the executables, one by one
 $(EXEC_DIR)/snippets% : $(BUILD_OBJ_DIR)/snippets%.o
 	$(call explain_build,Building and linking the binary: $@)
-	mkdir -p $(EXEC_DIR)/snippets
-	$(NVCC) $(CUDA_INC_DIR) $(CUDA_LIB_DIR) $< -o $@
+	mkdir -p $(SNIPPETS_EXEC_DIR)
+	$(NVCC) $(CUDA_INCL) $(CUDA_LIB) --compiler-options "$(COMMON_LINT_FLAGS)" $< -o $@
 
 # Build the object file, one by one
-# NOTE: We include the CUDA_INC_DIR as this includes the system headers and
+# NOTE: We include the CUDA_INCL as this includes the system headers and
 #       therefore suppress checking for errors in those files
 $(BUILD_OBJ_DIR)/snippets%.o : $(SNIPPETS_SRC)%.cu
 	$(call explain_build,Building the object file: $@)
-	mkdir -p $(BUILD_OBJ_DIR)/snippets
-	$(NVCC) $(CUDA_INC_DIR) --compiler-options "$(COMMON_LINT_FLAGS)" -c $< -o $@
+	mkdir -p $(SNIPPETS_OBJ_DIR)
+	$(NVCC) $(CUDA_INCL) --compiler-options "$(COMMON_LINT_FLAGS)" -c $< -o $@
 
 clean:
-	rm -rf $(EXEC_DIR) $(BUILD_OBJ_DIR)
+	rm -rf $(SNIPPETS_OBJ_DIR) $(SNIPPETS_EXEC_DIR)

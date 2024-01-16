@@ -6,17 +6,17 @@
 #include <string>
 
 #include "../include/compare.hpp"
+#include "../include/pre_post_process.hpp"
 #include "../include/reference_calc.hpp"
 #include "../include/timer.hpp"
 #include "../include/utils.hpp"
 
+// Declare function found in student_func.cu
+// We cannot include this as an header as it contains device code
 void your_rgba_to_greyscale(const uchar4 *const h_rgbaImage,
                             uchar4 *const d_rgbaImage,
                             unsigned char *const d_greyImage, size_t numRows,
                             size_t numCols);
-
-// include the definitions of the above functions for this homework
-#include "HW1.cpp"
 
 int main(int argc, char **argv) {
   uchar4 *h_rgbaImage, *d_rgbaImage;

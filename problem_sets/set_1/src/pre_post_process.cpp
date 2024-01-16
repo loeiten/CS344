@@ -1,6 +1,9 @@
+#include "../include/pre_post_process.hpp"
+
 #include <cuda.h>
 #include <cuda_runtime.h>
 
+#include <cstddef>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/opencv.hpp>
@@ -14,14 +17,9 @@ cv::Mat imageGrey;
 uchar4 *d_rgbaImage__;
 unsigned char *d_greyImage__;
 
-size_t numRows() { return imageRGBA.rows; }
-size_t numCols() { return imageRGBA.cols; }
+std::size_t numRows() { return imageRGBA.rows; }
+std::size_t numCols() { return imageRGBA.cols; }
 
-// return types are void since any internal error will be handled by quitting
-// no point in returning error codes...
-// returns a pointer to an RGBA version of the input image
-// and a pointer to the single channel grey-scale output
-// on both the host and device
 void preProcess(uchar4 **inputImage, unsigned char **greyImage,
                 uchar4 **d_rgbaImage, unsigned char **d_greyImage,
                 const std::string &filename) {
@@ -50,7 +48,7 @@ void preProcess(uchar4 **inputImage, unsigned char **greyImage,
   *inputImage = (uchar4 *)imageRGBA.ptr<unsigned char>(0);
   *greyImage = imageGrey.ptr<unsigned char>(0);
 
-  const size_t numPixels = numRows() * numCols();
+  const std::size_t numPixels = numRows() * numCols();
   // allocate memory on the device for both input and output
   checkCudaErrors(cudaMalloc(d_rgbaImage, sizeof(uchar4) * numPixels));
   checkCudaErrors(cudaMalloc(d_greyImage, sizeof(unsigned char) * numPixels));

@@ -69,5 +69,9 @@ dkms.conf
 # macOS
 .DS_Store
 
+# vim
+*.swp
+*.swo
+
 # Project related
 build/

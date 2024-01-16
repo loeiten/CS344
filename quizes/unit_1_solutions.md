@@ -118,3 +118,37 @@ Answers:
 
 1. `cudaMemcpyHostToDevice`
 1. `cudeMemcpyDeviceToHost`
+
+## Quiz 10
+
+```cuda
+kernel<<<dim3(8,4,2), dim3(16,16)>>>(...)
+```
+
+Questions:
+
+- How many blocks?
+- How many threads per block?
+- How many total threads?
+
+Answers:
+
+- How many blocks: `8*4*2=64`
+- How many threads per block: `16*16=256`
+- How many total threads? `64*256=16384`
+
+## Quiz 11
+
+Check the problems that can be solved using `map`
+
+- [] Sort an input array
+- [x] Add one to each element in an input array
+- [] Sum up all elements in an input array
+- [] Compute the average of an input array
+
+Comments:
+
+- Maps are on the form `map(elements, function)`
+- Maps have one output per input
+- GPUs have many parallel processors
+- GPUs optimize for throughput

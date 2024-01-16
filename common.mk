@@ -29,8 +29,7 @@ NVCC := $(CUDA_ROOT_DIR)/bin/nvcc
 # Setting up the paths
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 CUR_DIR := $(dir $(MKFILE_PATH))
-BASE_DIR := $(abspath $(CUR_DIR)/..)
-BUILD_DIR := $(abspath $(BASE_DIR)/build)
+BUILD_DIR := $(abspath $(CUR_DIR)/build)
 EXEC_DIR := $(abspath $(BUILD_DIR)/bin)
 BUILD_OBJ_DIR := $(abspath $(BUILD_DIR)/obj_files)
 

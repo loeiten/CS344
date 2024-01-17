@@ -1,0 +1,11 @@
+{
+  "name": "CS344",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "remoteUser": "root",
+"mounts": [
+    "source=${localWorkspaceFolder},target=/CS344,type=bind,consistency=cached"
+  ]
+}

@@ -31,11 +31,15 @@ repos:
       # Must include this directory in files as .git is in parent
       hooks:
         - id: clang-tidy
-          args:
-            - "-p=build/"
         - id: cppcheck
           args:
             - "--inline-suppr"  # Enable inline suppression
         - id: cpplint
           args: ["--filter=-legal/copyright,-build/include_order,-whitespace/comments,,-readability/casting,-build/include_subdir"]
-    # IWYU is skipped due to development on mac and cuda no longer supported on MacOs
+        - id: include-what-you-use
+          args:
+            - "-Xiwyu"  # Xiwyu comes before iwyu arguments
+            - "--mapping_file=.linters/iwyu.imp"
+            - "-Xiwyu"
+            - "--update_comments"
+            - "-I/usr/lib/llvm-12/lib/clang/12.0.1/include/"  # This is a clang argument as it's not preceded by iwyu

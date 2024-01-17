@@ -45,8 +45,13 @@ RUN update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-12 1
 RUN update-alternatives --install /usr/bin/clangd clangd /usr/bin/clangd-12 100
 
 # Set environment variables
+# Needed for clang-tidy
 ENV CPATH=/usr/include/opencv4
 ENV NVCC_PREPEND_FLAGS="-ccbin clang++"
 ENV CUDA_ROOT_DIR=/usr
 ENV CUDA_INCL=
 ENV CUDA_LD_LIB=
+ENV OPENCV_ROOT_DIR=
+# Needed so that -Wpedantic don't emit errors about 3rd party libs
+ENV OPENCV_INCL=/usr/include/opencv4
+ENV OPENCV_LD_LIB=

@@ -32,7 +32,7 @@ $(SET_1_OBJ_DIR)/main.o: $(SET_1_SRC_DIR)/main.cpp $(SET_1_HEADER_FILES)
 $(SET_1_OBJ_DIR)/student_func.o: $(SET_1_SRC_DIR)/student_func.cu $(SET_1_INCL_DIR)/utils.hpp
 	$(call explain_build,Building the object file: $@)
 	mkdir -p $(SET_1_OBJ_DIR)
-	$(NVCC) $(CUDA_INCL) --compiler-options "$(COMMON_LINT_FLAGS)" -c $< -o $@
+	$(NVCC) $(COMMON_FLAGS) $(CUDA_INCL) --compiler-options "$(COMMON_LINT_FLAGS)" -c $< -o $@
 
 $(SET_1_OBJ_DIR)/pre_post_process.o: $(SET_1_SRC_DIR)/pre_post_process.cpp $(SET_1_INCL_DIR)/pre_post_process.hpp
 	$(call explain_build,Building the object file: $@)

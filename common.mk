@@ -14,7 +14,7 @@ CXX_SANITIZERS := -fsanitize=address -fsanitize=undefined
 # See
 # https://github.com/NVIDIA/cub/issues/228#issuecomment-741890136
 # https://stackoverflow.com/questions/31000996/warning-when-compiling-cu-with-wpedantic-style-of-line-directive-is-a-gcc-ex
-CXX_LINT_FLAGS := $(COMMON_LINT_FLAGS) -Wpedandtic
+CXX_LINT_FLAGS := $(COMMON_LINT_FLAGS) -Wpedantic
 
 # CUDA specifics
 # NOTE: These should probably be set manually
@@ -33,8 +33,8 @@ NVCC := $(CUDA_ROOT_DIR)/bin/nvcc
 
 # OpenCV specifics
 OPENCV_ROOT_DIR ?= /usr
-OPENCV_INCL := -isystem $(OPENCV_ROOT_DIR)/include
-OPENCV_LD_LIB := -L$(OPENCV_ROOT_DIR)/lib64
+OPENCV_INCL ?= -isystem $(OPENCV_ROOT_DIR)/include
+OPENCV_LD_LIB ?= -L$(OPENCV_ROOT_DIR)/lib64
 
 # Setting up the paths
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))

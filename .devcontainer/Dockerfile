@@ -21,6 +21,7 @@ RUN apt install -yqq\
     iwyu \
     clang-format \
     clang-tidy \
+    clangd-12 \
     shellcheck \
     wget \
     pip \
@@ -38,4 +39,14 @@ RUN apt install -yqq \
     nvidia-cuda-toolkit \
     libopencv-dev
 
-ARG CPATH=/usr/include/opencv4
+# Update the alternatives
+RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-12 100
+RUN update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-12 100
+RUN update-alternatives --install /usr/bin/clangd clangd /usr/bin/clangd-12 100
+
+# Set environment variables
+ENV CPATH=/usr/include/opencv4
+ENV NVCC_PREPEND_FLAGS="-ccbin clang++"
+ENV CUDA_ROOT_DIR=/usr
+ENV CUDA_INCL=
+ENV CUDA_LD_LIB=

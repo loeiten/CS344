@@ -1,11 +1,12 @@
 #ifndef PROBLEM_SETS_SET_1_INCLUDE_PRE_POST_PROCESS_HPP_
 #define PROBLEM_SETS_SET_1_INCLUDE_PRE_POST_PROCESS_HPP_
 
-#include <cuda_runtime.h>
+#include <vector_types.h>  // for uchar4
 
-#include <cstddef>
-#include <opencv2/core/core.hpp>
-#include <string>
+#include <cstddef>  // for size_t
+#include <string>   // for string
+
+#include "opencv2/core/mat.hpp"  // for Mat
 
 // FIXME: These should not be global
 cv::Mat imageRGBA;

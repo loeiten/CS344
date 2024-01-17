@@ -1,9 +1,13 @@
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/opencv.hpp>
-#include <string>
+#include <stddef.h>  // for NULL
 
-#include "../include/utils.hpp"
+#include <iostream>  // for operator<<, endl, basic_ostream
+#include <string>    // for string
+
+#include "../include/utils.hpp"      // for checkResultsEps, checkResultsExact
+#include "opencv2/core.hpp"          // for minMaxLoc
+#include "opencv2/core/mat.hpp"      // for Mat, operator-, MatExpr, abs
+#include "opencv2/core/mat.inl.hpp"  // for Mat::channels, Mat::operator=
+#include "opencv2/imgcodecs.hpp"     // for imread, imwrite
 
 void compareImages(std::string reference_filename, std::string test_filename,
                    bool useEpsCheck, double perPixelError, double globalError) {

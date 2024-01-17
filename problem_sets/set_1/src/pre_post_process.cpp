@@ -1,21 +1,18 @@
 #include "../include/pre_post_process.hpp"
 
-#include <cuda.h>
-#include <cuda_runtime.h>
+#include <cuda_runtime.h>  // for cudaFree, cudaMalloc, cudaMe...
+#include <driver_types.h>  // for cudaMemcpyHostToDevice
+#include <stdlib.h>        // for exit
 
-#include <cstddef>
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/opencv.hpp>
-#include <string>
+#include <cstddef>   // for size_t
+#include <iostream>  // for operator<<, endl, basic_ostream
+#include <string>    // for string, operator<<
 
-#include "../include/utils.hpp"
-
-cv::Mat imageRGBA;
-cv::Mat imageGrey;
-
-uchar4 *d_rgbaImage__;
-unsigned char *d_greyImage__;
+#include "../include/utils.hpp"          // for check, checkCudaErrors
+#include "opencv2/core/hal/interface.h"  // for CV_8UC1
+#include "opencv2/core/mat.inl.hpp"      // for _InputArray::_InputArray
+#include "opencv2/imgcodecs.hpp"         // for imread, imwrite, IMREAD_COLOR
+#include "opencv2/imgproc.hpp"           // for cvtColor, COLOR_BGR2RGBA
 
 std::size_t numRows() { return imageRGBA.rows; }
 std::size_t numCols() { return imageRGBA.cols; }
@@ -27,13 +24,13 @@ void preProcess(uchar4 **inputImage, unsigned char **greyImage,
   checkCudaErrors(cudaFree(0));
 
   cv::Mat image;
-  image = cv::imread(filename.c_str(), CV_LOAD_IMAGE_COLOR);
+  image = cv::imread(filename.c_str(), cv::IMREAD_COLOR);
   if (image.empty()) {
     std::cerr << "Couldn't open file: " << filename << std::endl;
     exit(1);
   }
 
-  cv::cvtColor(image, imageRGBA, CV_BGR2RGBA);
+  cv::cvtColor(image, imageRGBA, cv::COLOR_BGR2RGBA);
 
   // allocate memory for the output
   imageGrey.create(image.rows, image.cols, CV_8UC1);
@@ -81,7 +78,7 @@ void cleanup() {
 
 void generateReferenceImage(std::string input_filename,
                             std::string output_filename) {
-  cv::Mat reference = cv::imread(input_filename, CV_LOAD_IMAGE_GRAYSCALE);
+  cv::Mat reference = cv::imread(input_filename, cv::IMREAD_GRAYSCALE);
 
   cv::imwrite(output_filename, reference);
 }

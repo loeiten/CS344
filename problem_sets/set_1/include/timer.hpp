@@ -1,7 +1,8 @@
 #ifndef PROBLEM_SETS_SET_1_INCLUDE_TIMER_HPP_
 #define PROBLEM_SETS_SET_1_INCLUDE_TIMER_HPP_
 
-#include <cuda_runtime.h>
+#include <cuda_runtime.h>  // for cudaEventCreate, cudaEventDestroy, cudaEve...
+#include <driver_types.h>  // for CUevent_st, cudaEvent_t
 
 struct GpuTimer {
   cudaEvent_t start;

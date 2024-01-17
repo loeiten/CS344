@@ -1,13 +1,15 @@
 #ifndef PROBLEM_SETS_SET_1_INCLUDE_UTILS_HPP_
 #define PROBLEM_SETS_SET_1_INCLUDE_UTILS_HPP_
 
-#include <cuda.h>
-#include <cuda_runtime.h>
-#include <cuda_runtime_api.h>
+#include <cuda_runtime.h>  // for cudaGetErrorString
+#include <driver_types.h>  // for cudaSuccess
+#include <stdlib.h>        // for exit, size_t
 
-#include <cassert>
-#include <iomanip>
-#include <iostream>
+#include <algorithm>  // for max, min
+#include <cassert>    // for assert
+#include <cstdint>
+#include <iomanip>   // for operator<<, setprecision
+#include <iostream>  // for operator<<, endl, basic_ostream, cerr, bas...
 
 #define checkCudaErrors(val) check((val), #val, __FILE__, __LINE__)
 
@@ -40,7 +42,7 @@ template <typename T>
 void checkResultsEps(const T* const ref, const T* const gpu, size_t numElem,
                      double eps1, double eps2) {
   assert(eps1 >= 0 && eps2 >= 0);
-  unsigned long long totalDiff = 0;
+  std::uint64_t totalDiff = 0;
   unsigned numSmallDifferences = 0;
   for (size_t i = 0; i < numElem; ++i) {
     // subtract smaller from larger in case of unsigned types

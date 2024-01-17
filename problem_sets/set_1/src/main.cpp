@@ -1,15 +1,17 @@
-// Udacity HW1 Solution
+#include <cuda_runtime.h>  // for cudaDeviceSynchronize
+#include <driver_types.h>  // for cudaMemcpyDeviceToHost
+#include <stdio.h>         // for printf, size_t
+#include <stdlib.h>        // for atof, exit
+#include <vector_types.h>  // for uchar4
 
-#include <stdio.h>
+#include <iostream>  // for operator<<, endl, basic_o...
+#include <string>    // for string
 
-#include <iostream>
-#include <string>
-
-#include "../include/compare.hpp"
-#include "../include/pre_post_process.hpp"
-#include "../include/reference_calc.hpp"
-#include "../include/timer.hpp"
-#include "../include/utils.hpp"
+#include "../include/compare.hpp"           // for compareImages
+#include "../include/pre_post_process.hpp"  // for numCols, numRows, postPro...
+#include "../include/reference_calc.hpp"    // for referenceCalculation
+#include "../include/timer.hpp"             // for GpuTimer
+#include "../include/utils.hpp"             // for check, checkCudaErrors
 
 // Declare function found in student_func.cu
 // We cannot include this as an header as it contains device code

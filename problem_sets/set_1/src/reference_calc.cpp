@@ -1,6 +1,6 @@
-#include <cuda_runtime.h>
+#include <vector_types.h>  // for uchar4
 
-#include <cstddef>
+#include <cstddef>  // for size_t
 
 void referenceCalculation(const uchar4* const rgbaImage,
                           unsigned char* const greyImage, std::size_t numRows,

@@ -17,6 +17,7 @@ CXX_SANITIZERS := -fsanitize=address -fsanitize=undefined
 CXX_LINT_FLAGS := $(COMMON_LINT_FLAGS) -Wpedandtic
 
 # CUDA specifics
+# NOTE: These should probably be set manually
 CUDA_VERSION ?= 12.1
 CUDA_ROOT_DIR ?= /usr/local/cuda-$(CUDA_VERSION)
 # We do not use -I to declare that these are system headers

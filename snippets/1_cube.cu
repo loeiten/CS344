@@ -1,7 +1,7 @@
 #include <stdio.h>
-// NOTE: These are not needed if you compile with nvcc
-#include "cuda_runtime.h"
-#include "cuda_runtime_api.h"
+
+// NOTE: This is automatically added by nvcc
+#include "cuda_runtime.h"  // for cudaFree, cudaMalloc, cudaMe...
 
 #define ARRAY_SIZE (96)
 

@@ -27,7 +27,7 @@ $(SET_1_EXEC_DIR)/problem_set_1: $(SET_1_OBJ_FILES)
 $(SET_1_OBJ_DIR)/main.o: $(SET_1_SRC_DIR)/main.cpp $(SET_1_HEADER_FILES)
 	$(call explain_build,Building the object file: $@)
 	mkdir -p $(SET_1_OBJ_DIR)
-	$(CXX) $(COMMON_FLAGS) $(CXX_LINT_FLAGS) $(CXX_SANITIZERS) $(OPENCV_INCL) -c $< -o $@
+	$(CXX) $(COMMON_FLAGS) $(CXX_LINT_FLAGS) $(CXX_SANITIZERS) $(CUDA_INCL) $(OPENCV_INCL) -c $< -o $@
 
 $(SET_1_OBJ_DIR)/student_func.o: $(SET_1_SRC_DIR)/student_func.cu $(SET_1_INCL_DIR)/utils.hpp
 	$(call explain_build,Building the object file: $@)

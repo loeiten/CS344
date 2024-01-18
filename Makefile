@@ -25,11 +25,12 @@ include common.mk
 # NOTE: The order does matter: We need dynamic_memory.o as a dependency.
 #       This file is created in utils, and consumed as a dependency in for
 #       example route.c, hence this needs to be processed first
-COMPONENTS := snippets
-all:
+COMPONENTS := snippets \
+			  problem_sets
+ all:
 	for dir in $(COMPONENTS); do \
 		$(MAKE) -C $$dir; \
 	done
 
 clean:
-	rm -rf $(EXEC_DIR) $(BUILD_OBJ_DIR)
+	rm -rf $(BUILD_DIR)

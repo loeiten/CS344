@@ -12,29 +12,22 @@ ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
 
 # Install normal dependencies
-# NOTE: It would be nice to use clang, but clang doesn't play too well with the
-#       current CUDA version, giving errors like
-#       /usr/bin/../lib/gcc/aarch64-linux-gnu/11/../../../../include/c++/11/ext/numeric_traits.h(70): error: qualified name is not allowed
-#       Due to c++17 features
-# NOTE: It would be nice to use the build-in gcc, but this also got the error
-#       /usr/include/c++/11/bits/std_function.h:435:145: error: parameter packs not expanded with '...'
-#       A workaround can be found at
-#       https://github.com/NVlabs/instant-ngp/issues/119#issuecomment-1698809070
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
 RUN apt install -yqq\
-    llvm \
-    clang \
+    llvm-14-dev \
+    libclang-14-dev \
+    clang-14 \
     cppcheck \
-    iwyu \
     clang-format \
     clang-tidy \
     clangd \
     shellcheck \
+    cmake \
+    git \
     wget \
     pip \
     vim \
-    git \
     ruby
 
 # Install pre-commit
@@ -52,14 +45,32 @@ RUN apt install -yqq \
 RUN wget https://developer.download.nvidia.com/compute/cuda/12.3.2/local_installers/cuda_12.3.2_545.23.08_linux.run
 RUN sh cuda_12.3.2_545.23.08_linux.run --toolkit --silent --override
 
+# Manually install IWYU in order to match the clang version (and to have fix_includes.py)
+RUN git clone https://github.com/include-what-you-use/include-what-you-use.git && \
+    cd ../include-what-you-use/ && \
+    git checkout clang_14 && \
+    mkdir build && \
+    cd build && \
+    cmake -G "Unix Makefiles" -DCMAKE_PREFIX_PATH=/usr/lib/llvm-14 -DCMAKE_INSTALL_PREFIX:PATH=/usr .. && \
+    cmake --build . --target install --config Release
+
+# Update the alternatives
+RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-14 100
+RUN update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-14 100
+
+# Remove unneeded files
+RUN rm -rf && \
+    include-what-you-use && \
+    cuda_12.3.2_545.23.08_linux.run
+
 # Set environment variables
 # CUDA
 ENV NVCC_PREPEND_FLAGS="-ccbin clang++"
 ENV CUDA_VERSION=12.3
 
 # OpenCV
-# Needed for clang-tidy
-ENV CPATH=/usr/include/opencv4
+# Needed for clang-tidy as one cannot add arguments after the file in pre-commit
+ENV CPATH=/usr/local/cuda-12.3/include:usr/include/opencv4
 ENV OPENCV_ROOT_DIR=
 # Needed so that -Wpedantic don't emit errors about 3rd party libs
 ENV OPENCV_INCL="-isystem /usr/include/opencv4"

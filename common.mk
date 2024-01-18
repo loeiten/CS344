@@ -8,7 +8,7 @@ CXX := clang++
 # See
 # https://developer.nvidia.com/blog/debugging-cuda-more-efficiently-with-nvidia-compute-sanitizer/
 # for details
-CXX_SANITIZERS := -fsanitize=address -fsanitize=undefined
+
 # -Wpedandtic throws errors like
 #  error: style of line directive is a GCC extension
 # See

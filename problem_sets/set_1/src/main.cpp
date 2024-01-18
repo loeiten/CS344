@@ -7,16 +7,15 @@
 #include <iostream>  // for operator<<, endl, basic_o...
 #include <string>    // for string
 
-#include "../include/compare.hpp"           // for compareImages
-#include "../include/pre_post_process.hpp"  // for numCols, numRows, postPro...
-#include "../include/reference_calc.hpp"    // for referenceCalculation
-#include "../include/timer.hpp"             // for GpuTimer
-#include "../include/utils.hpp"             // for check, checkCudaErrors
+#include "../include/compare.hpp"         // for compareImages
+#include "../include/image.hpp"           // for numCols, numRows, postPro...
+#include "../include/reference_calc.hpp"  // for referenceCalculation
+#include "../include/timer.hpp"           // for GpuTimer
+#include "../include/utils.hpp"           // for check, checkCudaErrors
 
 // Declare function found in student_func.cu
 // We cannot include this as an header as it contains device code
-void your_rgba_to_greyscale(const uchar4 *const h_rgbaImage,
-                            uchar4 *const d_rgbaImage,
+void your_rgba_to_greyscale(uchar4 *const d_rgbaImage,
                             unsigned char *const d_greyImage, size_t numRows,
                             size_t numCols);
 
@@ -60,15 +59,17 @@ int main(int argc, char **argv) {
                 << std::endl;
       exit(1);
   }
+  Image image;
+
   // load the image and give us our input and output pointers
-  preProcess(&h_rgbaImage, &h_greyImage, &d_rgbaImage, &d_greyImage,
-             input_file);
+  image.preProcess(&h_rgbaImage, &h_greyImage, &d_rgbaImage, &d_greyImage,
+                   input_file);
 
   GpuTimer timer;
   timer.Start();
   // call the students' code
-  your_rgba_to_greyscale(h_rgbaImage, d_rgbaImage, d_greyImage, numRows(),
-                         numCols());
+  your_rgba_to_greyscale(d_rgbaImage, d_greyImage, image.numRows(),
+                         image.numCols());
   timer.Stop();
   cudaDeviceSynchronize();
   checkCudaErrors(cudaGetLastError());
@@ -82,23 +83,24 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
-  size_t numPixels = numRows() * numCols();
+  size_t numPixels = image.numRows() * image.numCols();
   checkCudaErrors(cudaMemcpy(h_greyImage, d_greyImage,
                              sizeof(unsigned char) * numPixels,
                              cudaMemcpyDeviceToHost));
 
   // check results and output the grey image
-  postProcess(output_file, h_greyImage);
+  image.postProcess(output_file, h_greyImage);
 
-  referenceCalculation(h_rgbaImage, h_greyImage, numRows(), numCols());
+  referenceCalculation(h_rgbaImage, h_greyImage, image.numRows(),
+                       image.numCols());
 
-  postProcess(reference_file, h_greyImage);
+  image.postProcess(reference_file, h_greyImage);
 
   // generateReferenceImage(input_file, reference_file);
   compareImages(reference_file, output_file, useEpsCheck, perPixelError,
                 globalError);
 
-  cleanup();
+  image.cleanup();
 
   return 0;
 }

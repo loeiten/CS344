@@ -28,7 +28,6 @@ repos:
         files: '\.(cpp|hpp|cc|cxx|c|h|cu|cuh)$'
     - repo: https://github.com/pocc/pre-commit-hooks
       rev: v1.3.5
-      # Must include this directory in files as .git is in parent
       hooks:
         - id: clang-tidy
         - id: cppcheck
@@ -36,7 +35,7 @@ repos:
             - "--inline-suppr"  # Enable inline suppression
             - "--suppress=missingInclude"  # Do not check 3rd party includes
         - id: cpplint
-          args: ["--filter=-legal/copyright,-build/include_order,-whitespace/comments,,-readability/casting,-build/include_subdir"]
+          args: ["--filter=-legal/copyright,-build/include_order,-whitespace/comments,-readability/todo,-readability/casting,-build/include_subdir"]
         - id: include-what-you-use
           files: '\.(cpp|hpp|cc|cxx|c|h|cu)$'
           args:
@@ -44,5 +43,4 @@ repos:
             - "--mapping_file=.linters/iwyu.imp"
             - "-Xiwyu"
             - "--update_comments"
-            - "-I/usr/lib/llvm-12/lib/clang/12.0.1/include/"  # This is a clang argument as it's not preceded by iwyu
-            - "-I/usr/include/"
+            - "-I/usr/local/cuda-12.3/include" # This is a clang argument as it's not preceded by iwyu

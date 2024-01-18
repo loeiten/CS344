@@ -73,8 +73,7 @@ __global__ void rgba_to_greyscale(const uchar4* const rgbaImage,
   }
 }
 
-void your_rgba_to_greyscale(const uchar4* const h_rgbaImage,
-                            uchar4* const d_rgbaImage,
+void your_rgba_to_greyscale(uchar4* const d_rgbaImage,
                             unsigned char* const d_greyImage,
                             std::size_t numRows, std::size_t numCols) {
   // You must fill in the correct sizes for the blockSize and gridSize

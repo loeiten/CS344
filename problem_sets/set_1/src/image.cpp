@@ -1,4 +1,4 @@
-#include "../include/pre_post_process.hpp"
+#include "../include/image.hpp"
 
 #include <cuda_runtime.h>  // for cudaFree, cudaMalloc, cudaMe...
 #include <driver_types.h>  // for cudaMemcpyHostToDevice
@@ -14,12 +14,12 @@
 #include "opencv2/imgcodecs.hpp"         // for imread, imwrite, IMREAD_COLOR
 #include "opencv2/imgproc.hpp"           // for cvtColor, COLOR_BGR2RGBA
 
-std::size_t numRows() { return imageRGBA.rows; }
-std::size_t numCols() { return imageRGBA.cols; }
+std::size_t Image::numRows() { return imageRGBA.rows; }
+std::size_t Image::numCols() { return imageRGBA.cols; }
 
-void preProcess(uchar4 **inputImage, unsigned char **greyImage,
-                uchar4 **d_rgbaImage, unsigned char **d_greyImage,
-                const std::string &filename) {
+void Image::preProcess(uchar4 **inputImage, unsigned char **greyImage,
+                       uchar4 **d_rgbaImage, unsigned char **d_greyImage,
+                       const std::string &filename) {
   // make sure the context initializes ok
   checkCudaErrors(cudaFree(0));
 
@@ -42,7 +42,15 @@ void preProcess(uchar4 **inputImage, unsigned char **greyImage,
     exit(1);
   }
 
-  *inputImage = (uchar4 *)imageRGBA.ptr<unsigned char>(0);
+  // About padding and alignment:
+  // https://blog.quarkslab.com/unaligned-accesses-in-cc-what-why-and-solutions-to-do-it-properly.html
+  // https://www.youtube.com/watch?v=E0QhZ6tNoRg&ab_channel=C%2B%2BWeeklyWithJasonTurner
+  // The following line gives padding issues
+  // *inputImage = (uchar4 *)imageRGBA.ptr<unsigned char>(0);
+  // Hence we replace it with
+  auto *inputPtr = imageRGBA.ptr<unsigned char>(0);
+  std::memcpy(inputImage, inputPtr, imageRGBA.total() * imageRGBA.elemSize());
+
   *greyImage = imageGrey.ptr<unsigned char>(0);
 
   const std::size_t numPixels = numRows() * numCols();
@@ -63,21 +71,22 @@ void preProcess(uchar4 **inputImage, unsigned char **greyImage,
   d_greyImage__ = *d_greyImage;
 }
 
-void postProcess(const std::string &output_file, unsigned char *data_ptr) {
+void Image::postProcess(const std::string &output_file,
+                        unsigned char *data_ptr) {
   cv::Mat output(numRows(), numCols(), CV_8UC1, (void *)data_ptr);
 
   // output the image
   cv::imwrite(output_file.c_str(), output);
 }
 
-void cleanup() {
+void Image::cleanup() {
   // cleanup
   cudaFree(d_rgbaImage__);
   cudaFree(d_greyImage__);
 }
 
-void generateReferenceImage(std::string input_filename,
-                            std::string output_filename) {
+void Image::generateReferenceImage(std::string input_filename,
+                                   std::string output_filename) {
   cv::Mat reference = cv::imread(input_filename, cv::IMREAD_GRAYSCALE);
 
   cv::imwrite(output_filename, reference);

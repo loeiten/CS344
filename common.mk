@@ -30,6 +30,7 @@ CUDA_LD_LIB ?= -L$(CUDA_ROOT_DIR)/lib64
 #       PTX is a low-level parallel-thread-execution virtual machine and ISA (Instruction Set Architecture)
 #       SASS (source and assembly) is the low-level assembly language that compiles to binary microcode, which executes natively on NVIDIA GPU hardware.
 NVCC := $(CUDA_ROOT_DIR)/bin/nvcc
+NVCC_LINT_FLAGS := --compiler-options "$(COMMON_LINT_FLAGS)"
 
 # OpenCV specifics
 OPENCV_ROOT_DIR ?= /usr

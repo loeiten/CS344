@@ -59,8 +59,8 @@ RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-14 100
 RUN update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-14 100
 
 # Remove unneeded files
-RUN rm -rf && \
-    include-what-you-use && \
+RUN rm -rf \
+    include-what-you-use \
     cuda_12.3.2_545.23.08_linux.run
 
 # Set environment variables

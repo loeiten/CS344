@@ -1,5 +1,7 @@
 {
 "clangd.fallbackFlags": [
+    "-std=c++17",
     "-I/usr/local/cuda-12.3/include",
+    "-I/usr/include/opencv4",
 ]
 }

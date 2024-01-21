@@ -30,6 +30,10 @@ repos:
       rev: v1.3.5
       hooks:
         - id: clang-tidy
+          args:
+            - "--extra-arg=-std=c++17"
+            - "--extra-arg=-I/usr/local/cuda-12.3/include"
+            - "--extra-arg=-I/usr/include/opencv4"
         - id: cppcheck
           args:
             - "--inline-suppr"  # Enable inline suppression
@@ -43,4 +47,5 @@ repos:
             - "--mapping_file=.linters/iwyu.imp"
             - "-Xiwyu"
             - "--update_comments"
+            - "-std=c++17"
             - "-I/usr/local/cuda-12.3/include" # This is a clang argument as it's not preceded by iwyu

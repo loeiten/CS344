@@ -69,8 +69,6 @@ ENV NVCC_PREPEND_FLAGS="-ccbin clang++"
 ENV CUDA_VERSION=12.3
 
 # OpenCV
-# Needed for clang-tidy as one cannot add arguments after the file in pre-commit
-ENV CPATH=/usr/local/cuda-12.3/include:usr/include/opencv4
 ENV OPENCV_ROOT_DIR=
 # Needed so that -Wpedantic don't emit errors about 3rd party libs
 ENV OPENCV_INCL="-isystem /usr/include/opencv4"

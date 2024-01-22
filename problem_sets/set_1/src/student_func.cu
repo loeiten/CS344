@@ -31,7 +31,8 @@
 // You should fill in the kernel as well as set the block and grid sizes
 // so that the entire image is processed.
 
-#include <vector_types.h>  // for uchar4, dim3
+#include <device_launch_parameters.h>  // for blockIdx, threadIdx
+#include <vector_types.h>              // for uchar4, dim3
 
 #include <cstddef>  // for size_t
 

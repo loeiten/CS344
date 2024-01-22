@@ -49,3 +49,4 @@ repos:
             - "--update_comments"
             - "-std=c++17"
             - "-I/usr/local/cuda-12.3/include" # This is a clang argument as it's not preceded by iwyu
+            - "-I/usr/include/opencv4"

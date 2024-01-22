@@ -49,6 +49,7 @@ void Image::preProcess(uchar4 **inputImage, unsigned char **greyImage,
   // *inputImage = (uchar4 *)imageRGBA.ptr<unsigned char>(0);
   // Hence we replace it with
   auto *inputPtr = imageRGBA.ptr<unsigned char>(0);
+  // FIXME: This is a bug as the memory has not been allocated
   std::memcpy(inputImage, inputPtr, imageRGBA.total() * imageRGBA.elemSize());
 
   *greyImage = imageGrey.ptr<unsigned char>(0);

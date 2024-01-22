@@ -18,10 +18,10 @@ SET_1_OBJ_FILES := $(SET_1_OBJ_DIR)/main.o \
 	$(SET_1_OBJ_DIR)/compare.o \
 	$(SET_1_OBJ_DIR)/reference_calc.o
 
-# FIXME: Copy the data files
 $(SET_1_EXEC_DIR)/problem_set_1: $(SET_1_OBJ_FILES)
 	$(call explain_build,Building and linking the binary file: $@)
 	mkdir -p $(SET_1_EXEC_DIR)
+	cp -r $(SET_1_SRC_DIR)/../data $(SET_1_EXEC_DIR)
 	$(NVCC) $(COMMON_FLAGS) $(CUDA_INCL) $(CUDA_LD_LIB) $(CUDA_LIBS) $(OPENCV_LD_LIB) $(OPENCV_LIBS) $(NVCC_LINT_FLAGS) $^ -o $@
 
 # NOTE: The dependencies are explicitly included

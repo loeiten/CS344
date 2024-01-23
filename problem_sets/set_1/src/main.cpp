@@ -27,35 +27,47 @@ int main(int argc, char **argv) {
   std::filesystem::path input_path;
   std::filesystem::path output_path;
   std::filesystem::path reference_path;
+  std::string base_name = "cinque_terre";
+  std::string extension = "gold";
+  std::string output_dir_name = "output";
+  std::string file_name;
   double per_pixel_error = 0.0;
   double global_error = 0.0;
   bool useEpsCheck = false;
   switch (argc) {
     case 1:
-      input_path = std::filesystem::path("./data/cinque_terre.gold");
-      output_path = std::filesystem::path("./output/HW1_output.png");
-      reference_path = std::filesystem::path("./output/HW1_reference.png");
+      file_name = "./data/" + base_name + "." + extension;
+      input_path = std::filesystem::absolute(file_name);
+      file_name = "./" + output_dir_name + "/" + base_name + "_gpu.png";
+      output_path = std::filesystem::absolute(file_name);
+      file_name = "./" + output_dir_name + "/" + base_name + "_cpu.png";
+      reference_path = std::filesystem::absolute(file_name);
       break;
     case 2:
-      input_path = std::filesystem::path(argv[1]);
-      output_path = std::filesystem::path("./output/HW1_output.png");
-      reference_path = std::filesystem::path("./output/HW1_reference.png");
+      input_path = std::filesystem::absolute(argv[1]);
+      base_name = input_path.stem().string();
+      file_name = "./" + output_dir_name + "/" + base_name + "_gpu.png";
+      output_path = std::filesystem::absolute(file_name);
+      file_name = "./" + output_dir_name + "/" + base_name + "_cpu.png";
+      reference_path = std::filesystem::absolute(file_name);
       break;
     case 3:
-      input_path = std::filesystem::path(argv[1]);
-      output_path = std::filesystem::path(argv[2]);
-      reference_path = std::filesystem::path("./output/HW1_reference.png");
+      input_path = std::filesystem::absolute(argv[1]);
+      output_path = std::filesystem::absolute(argv[2]);
+      base_name = input_path.stem().string();
+      file_name = base_name + "_cpu.png";
+      reference_path = output_path.parent_path().concat(file_name);
       break;
     case 4:
-      input_path = std::filesystem::path(argv[1]);
-      output_path = std::filesystem::path(argv[2]);
-      reference_path = std::filesystem::path(argv[3]);
+      input_path = std::filesystem::absolute(argv[1]);
+      output_path = std::filesystem::absolute(argv[2]);
+      reference_path = std::filesystem::absolute(argv[3]);
       break;
     case 6:
       useEpsCheck = true;
-      input_path = std::filesystem::path(argv[1]);
-      output_path = std::filesystem::path(argv[2]);
-      reference_path = std::filesystem::path(argv[3]);
+      input_path = std::filesystem::absolute(argv[1]);
+      output_path = std::filesystem::absolute(argv[2]);
+      reference_path = std::filesystem::absolute(argv[3]);
       per_pixel_error = atof(argv[4]);
       global_error = atof(argv[5]);
       break;

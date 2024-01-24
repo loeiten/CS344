@@ -76,5 +76,6 @@ dkms.conf
 
 # Project related
 build/
+output/
 # In case an install file is installed for debugging purposes
 *.run

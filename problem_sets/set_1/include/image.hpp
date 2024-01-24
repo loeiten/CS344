@@ -11,6 +11,7 @@
 class Image {
  public:
   Image() = default;
+  ~Image();
   std::size_t numRows();
   std::size_t numCols();
 
@@ -25,8 +26,6 @@ class Image {
 
   void postProcess(const std::string &output_file, unsigned char *data_ptr);
 
-  void cleanup();
-
   void generateReferenceImage(std::string input_filename,
                               std::string output_filename);
 
@@ -36,6 +35,8 @@ class Image {
 
   uchar4 *d_rgbaImage__;
   unsigned char *d_greyImage__;
+
+  uchar4 *h_rgbaImage_ = nullptr;
 };
 
 #endif  // PROBLEM_SETS_SET_1_INCLUDE_IMAGE_HPP_

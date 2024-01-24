@@ -14,6 +14,14 @@
 #include "opencv2/imgcodecs.hpp"         // for imread, imwrite, IMREAD_COLOR
 #include "opencv2/imgproc.hpp"           // for cvtColor, COLOR_BGR2RGBA
 
+Image::~Image() {
+  if (h_rgbaImage_ == nullptr) {
+    delete[] h_rgbaImage_;
+  }
+  cudaFree(d_rgbaImage__);
+  cudaFree(d_greyImage__);
+}
+
 std::size_t Image::numRows() { return imageRGBA.rows; }
 std::size_t Image::numCols() { return imageRGBA.cols; }
 
@@ -48,9 +56,11 @@ void Image::preProcess(uchar4 **inputImage, unsigned char **greyImage,
   // The following line gives padding issues
   // *inputImage = (uchar4 *)imageRGBA.ptr<unsigned char>(0);
   // Hence we replace it with
-  auto *inputPtr = imageRGBA.ptr<unsigned char>(0);
-  // FIXME: This is a bug as the memory has not been allocated
-  std::memcpy(inputImage, inputPtr, imageRGBA.total() * imageRGBA.elemSize());
+  auto *imageRGBAPtr = imageRGBA.ptr<unsigned char>(0);
+  h_rgbaImage_ = new uchar4[imageRGBA.total()];
+  std::memcpy(h_rgbaImage_, imageRGBAPtr,
+              imageRGBA.total() * imageRGBA.elemSize());
+  *inputImage = h_rgbaImage_;
 
   *greyImage = imageGrey.ptr<unsigned char>(0);
 
@@ -78,12 +88,6 @@ void Image::postProcess(const std::string &output_file,
 
   // output the image
   cv::imwrite(output_file.c_str(), output);
-}
-
-void Image::cleanup() {
-  // cleanup
-  cudaFree(d_rgbaImage__);
-  cudaFree(d_greyImage__);
 }
 
 void Image::generateReferenceImage(std::string input_filename,

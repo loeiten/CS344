@@ -130,7 +130,5 @@ int main(int argc, char **argv) {
   compareImages(reference_path, output_path, useEpsCheck, per_pixel_error,
                 global_error);
 
-  image.cleanup();
-
   return 0;
 }

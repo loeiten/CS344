@@ -1,7 +1,8 @@
 #include <stddef.h>  // for NULL
 
-#include <iostream>  // for operator<<, endl, basic_ostream
-#include <string>    // for string
+#include <filesystem>  // for path
+#include <iostream>    // for operator<<, endl, basic_ostream
+#include <string>      // for string
 
 #include "../include/utils.hpp"      // for checkResultsEps, checkResultsExact
 #include "opencv2/core.hpp"          // for minMaxLoc
@@ -31,7 +32,12 @@ void compareImages(std::string reference_filename, std::string test_filename,
 
   diff = diffSingleChannel.reshape(reference.channels(), 0);
 
-  cv::imwrite("HW1_differenceImage.png", diff);
+  std::filesystem::path diff_path =
+      std::filesystem::absolute(reference_filename)
+          .parent_path()
+          .concat("cpu_gpu_difference.png");
+  cv::imwrite(diff_path.string(), diff);
+  std::cout << "Image written to: " << diff_path << std::endl;
   // OK, now we can start comparing values...
   unsigned char *referencePtr = reference.ptr<unsigned char>(0);
   unsigned char *testPtr = test.ptr<unsigned char>(0);

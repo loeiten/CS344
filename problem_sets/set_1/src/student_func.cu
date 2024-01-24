@@ -103,31 +103,33 @@ void your_rgba_to_greyscale(uchar4* const d_rgbaImage,
   // * these are called streaming multiprocessors or (sm)
   //
   // Assuming we have relatively small images we can cap the threads per block
-  // to 64
-  constexpr int max_threads_per_block = 64;
+  // to 1024
+  // Since we are operating in 2D, it means that
+  // max_threads_per_dim = sqrt(1024) = 32
+  constexpr int max_threads_per_dim = 32;
   // To find the number of blocks we could therefore roof divide n_dim with
-  // max_threads_per_block
+  // max_threads_per_dim
   // We need then to take care that we are not writing out of bounds
   // Example: Assume we have
   // numCols=5
   // numRows=3
-  // max_threads_per_block=2
+  // max_threads_per_dim=2
   // If we use one thread per pixel, we would need 3*5=15 threads
   // x_blocks=RoofDivide(5, 2) = 3
   // y_blocks=RoofDivide(3, 2) = 2
   // RoofDivide(nominator, denomiator) = (nominator+(denomiator-1))/(denomiator)
   const int x_blocks =
-      (numCols + (max_threads_per_block - 1)) / max_threads_per_block;
+      (numCols + (max_threads_per_dim - 1)) / max_threads_per_dim;
   const int y_blocks =
-      (numRows + (max_threads_per_block - 1)) / max_threads_per_block;
+      (numRows + (max_threads_per_dim - 1)) / max_threads_per_dim;
   // We can then have
   // dim3 gridSize(x_blocks, y_blocks, 1)
-  // dim3 blockSize(max_threads_per_block, max_threads_per_block, 1)
+  // dim3 blockSize(max_threads_per_dim, max_threads_per_dim, 1)
   // This will result in
-  // x_blocks*max_threads_per_block*y_blocks*max_threads_per_block = 3*2*2*2=24
+  // x_blocks*max_threads_per_dim*y_blocks*max_threads_per_dim = 3*2*2*2=24
   // threads in total, but only 15 have to do actual work
   const dim3 gridSize(x_blocks, y_blocks, 1);
-  const dim3 blockSize(max_threads_per_block, max_threads_per_block, 1);
+  const dim3 blockSize(max_threads_per_dim, max_threads_per_dim, 1);
   rgba_to_greyscale<<<gridSize, blockSize>>>(d_rgbaImage, d_greyImage, numRows,
                                              numCols);
 

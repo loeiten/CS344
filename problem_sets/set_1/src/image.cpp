@@ -33,6 +33,7 @@ void Image::preProcess(uchar4 **inputImage, unsigned char **greyImage,
 
   cv::Mat image;
   image = cv::imread(filename.c_str(), cv::IMREAD_COLOR);
+  std::cout << "File read from: " << filename << std::endl;
   if (image.empty()) {
     std::cerr << "Couldn't open file: " << filename << std::endl;
     exit(1);
@@ -88,6 +89,7 @@ void Image::postProcess(const std::string &output_file,
 
   // output the image
   cv::imwrite(output_file.c_str(), output);
+  std::cout << "File written to: " << output_file << std::endl;
 }
 
 void Image::generateReferenceImage(std::string input_filename,

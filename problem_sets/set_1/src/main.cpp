@@ -4,9 +4,9 @@
 #include <stdlib.h>        // for atof, exit
 #include <vector_types.h>  // for uchar4
 
-#include <filesystem>
-#include <iostream>  // for operator<<, endl, basic_o...
-#include <string>    // for string
+#include <filesystem>  // for pat, absolute
+#include <iostream>    // for operator<<, endl, basic_o...
+#include <string>      // for string
 
 #include "../include/compare.hpp"         // for compareImages
 #include "../include/image.hpp"           // for numCols, numRows, postPro...

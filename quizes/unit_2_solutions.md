@@ -128,3 +128,44 @@ the programmer can specify ...
 - [ ] that block X will run on SM Z
 
 NOTE: All of the above are false as there ar no such guarantees
+
+## Quiz 7
+
+How many different outputs can different run of this program produce
+
+```cpp
+#include <stdio.h>
+
+#define NUM_BLOCKS 16
+#define BLOCK_WIDTH 1
+
+__global__ void hello()
+{
+  printf("Hello world! I'm a thread in block %d\n", blockIdx.x);
+}
+
+int main(int argc, char **argv){
+  // Launch the kernel
+  hello<<<NUM_BLOCKS, BLOCK_WIDTH>>>();
+
+  // Force the printf()s to flush
+  cudaDeviceSynchronize();
+
+  printf("That's all!\n");
+}
+```
+
+Answer:
+
+- [ ] 1
+- [ ] 16
+- [ ] 65 536
+- [x] 21 trillion
+
+Comment:
+
+- `16!` is approximately 21 trillion
+- CUDA guarantees that all threads in a block run on the same SM at the same
+  time
+- CUDA guarantees that all blocks in a kernel finish before any blocks from
+  the next kernel

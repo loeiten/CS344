@@ -169,3 +169,54 @@ Comment:
   time
 - CUDA guarantees that all blocks in a kernel finish before any blocks from
   the next kernel
+
+## Quiz 8
+
+- [x] All threads from a block can access the same variable in that blocks
+  shared memory
+- [x] Threads from two different blocks can access the same variable in global
+  memory
+- [x] Threads from different blocks have their own copy of local variables in
+  local memory
+- [x] Threads from the same block have their own copy of local variables in
+  local memory
+
+Comment:
+
+- All threads have their own local memory
+- Threads in a block have access to a shared memory
+- All blocks have access to the global memory
+- The CPU memory is usually copied to the GPU memory
+
+## Quiz 9
+
+We want to move every element of an array on step to the "left",
+(i.e. `array[0] = array[1]`, `array[1]=array[2]`, ...).
+
+How many barriers are needed in the following code snippet to achieve this?
+
+```cpp
+int idx = threadIdx.x;
+__shared__ int array[128];
+array[idx] = threadIdx.x;
+if(idx < 127){
+  array[idx] = array[idx + 1];
+}
+```
+
+Answer:
+
+`3`
+
+```cpp
+int idx = threadIdx.x;
+__shared__ int array[128];
+array[idx] = threadIdx.x;  // This is a write op
+__syncthreads();  // The values must be valid before proceeding
+if(idx < 127){
+  int temp = array[idx + 1]; // This read op must finish before we try to write
+  __syncthreads();
+  array[idx] = temp;  // If temp would not finish we would be in trouble
+  __syncthreads();  // Ensures that ops are finished before accessing array
+}
+```

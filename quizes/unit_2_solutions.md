@@ -220,3 +220,47 @@ if(idx < 127){
   __syncthreads();  // Ensures that ops are finished before accessing array
 }
 ```
+
+## Quiz 10
+
+Which of the following code snippets are correct
+
+```cpp
+__global__ void foo(...){
+  __shared__ int s[1024];
+  int i = threadIdx.x;
+  ...
+  // A
+  __syncthreads();
+  s[i] = s[i-1];
+  __syncthreads();
+  // B
+  __syncthreads();
+  if (i%2){
+    s[i] = s[i-1];
+  }
+  __syncthreads();
+  // C
+  __syncthreads();
+  s[i] = (s[i-1] + s[i] + s[i+1])/3.0;
+  printf("s[%d]=%f", i, s[i]);
+  __syncthreads();
+}
+```
+
+- [ ] A
+- [x] B
+- [ ] C
+
+Comments:
+
+- In A there is contention:
+   - When `i=1` then the code will try to write `s[0]` to `s[1]`
+   - When `i=2` then the code will try to write `s[1]` to `s[2]`
+   - However, there is no guarantee that `s[1]` finishes before `s[2]`
+- In B there is no contention of the elements:
+   - When `i=1` nothing happens
+   - When `i=2` then `s[1]` is written to `s[2]`
+   - When `i=3` nothing happens
+   - When `i=4` then `s[3]` is written to `s[4]`
+- In C we have the same problem as in A

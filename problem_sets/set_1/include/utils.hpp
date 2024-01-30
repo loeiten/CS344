@@ -7,9 +7,9 @@
 
 #include <algorithm>  // for max, min
 #include <cassert>    // for assert
-#include <cstdint>
-#include <iomanip>   // for operator<<, setprecision
-#include <iostream>  // for operator<<, endl, basic_ostream, cerr, bas...
+#include <cstdint>    // for uint64_t
+#include <iomanip>    // for operator<<, setprecision
+#include <iostream>   // for operator<<, endl, basic_ostream, cerr, bas...
 
 #define checkCudaErrors(val) check((val), #val, __FILE__, __LINE__)
 

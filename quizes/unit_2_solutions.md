@@ -259,8 +259,118 @@ Comments:
    - When `i=2` then the code will try to write `s[1]` to `s[2]`
    - However, there is no guarantee that `s[1]` finishes before `s[2]`
 - In B there is no contention of the elements:
-   - When `i=1` nothing happens
-   - When `i=2` then `s[1]` is written to `s[2]`
-   - When `i=3` nothing happens
-   - When `i=4` then `s[3]` is written to `s[4]`
+   - When `i=1`, then `1%2 = 1`, so `s[0]` is written to `s[1]`
+   - When `i=2` nothing happens
+   - When `i=3`, then `3%2 = 1`, so `s[2]` is written to `s[3]`
 - In C we have the same problem as in A
+
+To fix the contention issues one would do
+
+1. All read operations to `tmp`
+1. `__syncthreads()`
+1. All write from `tmp` to the new element
+1. `__syncthreads()`
+
+## Quiz 11
+
+Rank these operations from fastest (1) to slowest (4)
+
+```cpp
+__global__ void foo(float *x, float *y, float *z){
+  __shared__ float a, b, c;
+  float s, t u;
+  ...
+  // A
+  s = *x;
+  // B
+  t = s;
+  // C
+  a = b;
+  // D
+  *y = *z;
+  ...
+}
+```
+
+1. B
+1. C
+1. A
+1. D
+
+Comment:
+
+NOTE: This is oversimplified as compiler may promote to registers,
+rearrange access and so forth
+
+- We want to maximize the arithmetic intensity:
+  `arithmetic intensity = math/memory`
+   - That is:
+      - Maximize compute ops per thread
+      - Minimize time spent on memory per thread
+        (`local < shared << gloabl << cpu`)
+- A: Read global, write to local
+- B: Read local, write to local
+- C: Read shared, write to shared
+- D: Read global, write to global
+
+## Quiz 12
+
+Which statements have coalesced access pattern?
+
+```cpp
+__global__ void foo(float *g){
+  float a = 3.14;
+  int i = threadIdx.x;
+
+  // A
+  g[i] = a;
+  // B
+  g[i*2] = a;
+  // C
+  a = g[i]
+  // D
+  a = g[BLOCK_WIDTH/2 + i];
+  // E
+  g[i] = a * g[BLOCK_WIDTH/2 + i];
+  // F
+  g[BLOCK_WIDTH-1 - i] = a;
+}
+```
+
+- [x] A
+- [ ] B
+- [x] C
+- [x] D
+- [x] E
+- [x] F
+
+Comment:
+
+- Coalesced memory access is good as the GPU will access a large memory chunk
+  at once, so other threads can re-use the same memory transaction
+- Strided memory access is worse as one need more memory transaction per thread
+- Random memory access is the worst as each thread will need its own memory
+  transaction
+- B in the example above is strided, the rest are coalesced in read and write
+
+## Quiz 13
+
+Using [`2_atomics.cu`](../snippets/2_atomics.cu), rank the following from
+fastest (`1`) to slowest
+
+- [ ] `10^6` threads incrementing `10^6` elements
+- [ ] `10^6` threads atomically incrementing `10^6` elements
+- [ ] `10^6` threads incrementing `100` elements
+- [ ] `10^6` threads atomically incrementing `100` elements
+- [ ] `10^7` threads atomically incrementing `100` elements
+
+Comment:
+
+- Atomics are operation that is indivisible which is performed as a single,
+  uninterruptible unit and is not subjected to interference from other
+  operations or threads
+- On GPU only certain operations on certain data types are supported
+- One could usually work around this using atomic CAS (compare-and-swap)
+- It serialized the access to memory, so it will be slower than non-atomic
+- Still no ordering constraints using atomics
+- Remember that floating-point arithmetic is non-associative

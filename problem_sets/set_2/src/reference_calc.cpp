@@ -1,7 +1,10 @@
-#include <algorithm>
-#include <cassert>
-// for uchar4 struct
-#include <cuda_runtime.h>
+#include <stddef.h>  // for size_t
+
+#include <algorithm>  // for max, min
+#include <cassert>    // for assert
+
+#include "vector_functions.hpp"  // for make_uchar4
+#include "vector_types.h"        // for uchar4
 
 void channelConvolution(const unsigned char *const channel,
                         unsigned char *const channelBlurred,

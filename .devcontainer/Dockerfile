@@ -28,7 +28,8 @@ RUN apt install -yqq\
     wget \
     pip \
     vim \
-    ruby
+    ruby \
+    python-is-python3
 
 # Install pre-commit
 RUN pip install \

@@ -28,7 +28,7 @@ CUDA_LIBS := -lcudadevrt -lcudart_static
 $(EXEC_DIR)/snippets% : $(BUILD_OBJ_DIR)/snippets%.o
 	$(call explain_build,Building and linking the binary: $@)
 	mkdir -p $(SNIPPETS_EXEC_DIR)
-	$(NVCC) $(CUDA_INCL) $(CUDA_LD_LIB) $(CUDA_LIBS) $(NVCC_LINT_FLAGS) $< -o $@
+	$(NVCC) $(COMMON_FLAGS) $(CUDA_INCL) $(CUDA_LD_LIB) $(CUDA_LIBS) $(NVCC_LINT_FLAGS) $< -o $@
 
 # Build the object file, one by one
 # NOTE: We include the CUDA_INCL as this includes the system headers and
@@ -36,7 +36,7 @@ $(EXEC_DIR)/snippets% : $(BUILD_OBJ_DIR)/snippets%.o
 $(BUILD_OBJ_DIR)/snippets%.o : $(SNIPPETS_SRC)%.cu
 	$(call explain_build,Building the object file: $@)
 	mkdir -p $(SNIPPETS_OBJ_DIR)
-	$(NVCC) $(CUDA_INCL) $(NVCC_LINT_FLAGS) -c $< -o $@
+	$(NVCC) $(COMMON_FLAGS) $(CUDA_INCL) $(NVCC_LINT_FLAGS) -c $< -o $@
 
 clean:
 	rm -rf $(SNIPPETS_OBJ_DIR) $(SNIPPETS_EXEC_DIR)

@@ -54,8 +54,7 @@ __global__ void IncrementNaive(int* g, const int num_elements) {
 __global__ void IncrementAtomic(int* g, const int num_elements) {
   int i = blockIdx.x * blockDim.x + threadIdx.x;
   i = i % num_elements;
-  // atomicAdd(&g[i], 1);
-  g[i] = g[i] + 1;
+  atomicAdd(&g[i], 1);
 }
 
 int main(int argc, char** argv) {
@@ -68,7 +67,8 @@ int main(int argc, char** argv) {
   const int num_threads = std::stoi(argv[2]);
   const int num_elements = std::stoi(argv[3]);
   std::cout << num_threads << " total threads in " << num_threads / block_width
-            << " writing to " << num_elements << " array elements" << std::endl;
+            << " writing to " << num_elements << " array elements using "
+            << argv[1] << std::endl;
 
   // Declare and allocate host memory
   int* h_array = new int[num_elements]{};

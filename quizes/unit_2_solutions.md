@@ -358,11 +358,12 @@ Comment:
 Using [`2_atomics.cu`](../snippets/2_atomics.cu), rank the following from
 fastest (`1`) to slowest
 
-- [ ] `10^6` threads incrementing `10^6` elements
-- [ ] `10^6` threads atomically incrementing `10^6` elements
-- [ ] `10^6` threads incrementing `100` elements
-- [ ] `10^6` threads atomically incrementing `100` elements
-- [ ] `10^7` threads atomically incrementing `100` elements
+- [2] `10^6` threads incrementing `10^6` elements
+- [4] `10^6` threads atomically incrementing `10^6` elements
+- [1] (incorrect answers due to contention) `10^6` threads incrementing `100`
+  elements
+- [3] `10^6` threads atomically incrementing `100` elements
+- [5] `10^7` threads atomically incrementing `100` elements
 
 Comment:
 
@@ -374,3 +375,6 @@ Comment:
 - It serialized the access to memory, so it will be slower than non-atomic
 - Still no ordering constraints using atomics
 - Remember that floating-point arithmetic is non-associative
+- Number `1` is faster than number `2` as it touches less memory,
+  but produces the wrong answer due to contention
+- Number `3` is faster than number `4` for the same reason

@@ -1,6 +1,8 @@
 .PHONY: all clean
 
-COMPONENTS := set_1
+COMPONENTS := set_1 \
+              set_2 \
+
 all:
 	for dir in $(COMPONENTS); do \
 		$(MAKE) -C $$dir; \

@@ -19,6 +19,9 @@
 Image::~Image() {
   cudaFree(d_inputImageRGBA__);
   cudaFree(d_outputImageRGBA__);
+
+  delete[] h_inputImageRGBA_;
+  delete[] h_outputImageRGBA_;
   delete[] h_filter__;
 }
 
@@ -52,8 +55,23 @@ void Image::preProcess(uchar4 **h_inputImageRGBA, uchar4 **h_outputImageRGBA,
     exit(1);
   }
 
-  *h_inputImageRGBA = (uchar4 *)imageInputRGBA.ptr<unsigned char>(0);
-  *h_outputImageRGBA = (uchar4 *)imageOutputRGBA.ptr<unsigned char>(0);
+  // About padding and alignment:
+  // https://blog.quarkslab.com/unaligned-accesses-in-cc-what-why-and-solutions-to-do-it-properly.html
+  // https://www.youtube.com/watch?v=E0QhZ6tNoRg&ab_channel=C%2B%2BWeeklyWithJasonTurner
+  // The following line gives padding issues
+  // *h_inputImageRGBA = (uchar4 *)imageInputRGBA.ptr<unsigned char>(0);
+  // *h_outputImageRGBA = (uchar4 *)imageOutputRGBA.ptr<unsigned char>(0);
+  // Hence we replace it with
+  auto *inputImageRGBAPtr = imageInputRGBA.ptr<unsigned char>(0);
+  auto *outputImageRGBAPtr = imageOutputRGBA.ptr<unsigned char>(0);
+  h_inputImageRGBA_ = new uchar4[imageInputRGBA.total()];
+  h_outputImageRGBA_ = new uchar4[imageOutputRGBA.total()];
+  std::memcpy(h_inputImageRGBA_, inputImageRGBAPtr,
+              imageInputRGBA.total() * imageInputRGBA.elemSize());
+  std::memcpy(h_outputImageRGBA_, outputImageRGBAPtr,
+              imageOutputRGBA.total() * imageOutputRGBA.elemSize());
+  *h_inputImageRGBA = h_inputImageRGBA_;
+  *h_outputImageRGBA = h_outputImageRGBA_;
 
   const std::size_t numPixels = numRows() * numCols();
   // allocate memory on the device for both input and output

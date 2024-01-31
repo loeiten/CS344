@@ -103,13 +103,13 @@
 
 //****************************************************************************
 
-#include "utils.h"
+#include "../include/utils.hpp"
 
 __global__ void gaussian_blur(const unsigned char* const inputChannel,
                               unsigned char* const outputChannel, int numRows,
                               int numCols, const float* const filter,
                               const int filterWidth) {
-  // TODO
+  // TODO:
 
   // NOTE: Be sure to compute any intermediate results in floating point
   // before storing the final result as unsigned char.
@@ -140,7 +140,7 @@ __global__ void separateChannels(const uchar4* const inputImageRGBA,
                                  unsigned char* const redChannel,
                                  unsigned char* const greenChannel,
                                  unsigned char* const blueChannel) {
-  // TODO
+  // TODO:
   //
   // NOTE: Be careful not to try to access memory that is outside the bounds of
   // the image. You'll want code that performs the following check before
@@ -168,7 +168,9 @@ __global__ void recombineChannels(const unsigned char* const redChannel,
 
   // make sure we don't try and access memory outside the image
   // by having any threads mapped there return early
-  if (thread_2D_pos.x >= numCols || thread_2D_pos.y >= numRows) return;
+  if (thread_2D_pos.x >= numCols || thread_2D_pos.y >= numRows) {
+    return;
+  }
 
   unsigned char red = redChannel[thread_1D_pos];
   unsigned char green = greenChannel[thread_1D_pos];

@@ -28,7 +28,6 @@ class Image {
   void generateReferenceImage(std::string input_filename,
                               std::string output_filename, int kernel_size);
 
-  // FIXME: This has been made public, check if that is correct
   uchar4 *d_outputImageRGBA__;
 
  private:
@@ -38,6 +37,9 @@ class Image {
   uchar4 *d_inputImageRGBA__;
 
   float *h_filter__;
+
+  uchar4 *h_inputImageRGBA_ = nullptr;
+  uchar4 *h_outputImageRGBA_ = nullptr;
 };
 
 #endif  // PROBLEM_SETS_SET_2_INCLUDE_IMAGE_HPP_

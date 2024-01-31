@@ -152,3 +152,13 @@ Comments:
 - Maps have one output per input
 - GPUs have many parallel processors
 - GPUs optimize for throughput
+
+## Summary
+
+- Tehcnology trends
+   - The world is becoming parallel
+   - Moores law
+- Throughput vs latency
+   - One fast node vs many slower nodes
+- GPU design goals
+- Map

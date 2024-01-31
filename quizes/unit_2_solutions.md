@@ -378,3 +378,19 @@ Comment:
 - Number `1` is faster than number `2` as it touches less memory,
   but produces the wrong answer due to contention
 - Number `3` is faster than number `4` for the same reason
+
+## Summary
+
+- Communication patters
+   - gather, scatter, stencil, transpose
+- GPU hardware & programming model
+   - SMs, threads, blocks, ordering
+   - Synchronization
+   - Memory model - local, global, shared, atomics
+- Efficient GPU programming
+   - Access memory faster
+      - Coalescing global memory
+      - Use faster memory
+   - Avoid thread divergence
+      - If/else branching
+      - For-loops taking long time

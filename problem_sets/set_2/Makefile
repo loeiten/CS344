@@ -1,48 +1,55 @@
-NVCC=nvcc
+include ../../common.mk
 
-###################################
-# These are the default install   #
-# locations on most linux distros #
-###################################
+SET_2_SRC_DIR := $(ROOT_DIR)problem_sets/set_2/src
+SET_2_INCL_DIR := $(ROOT_DIR)problem_sets/set_2/include
 
-OPENCV_LIBPATH=/usr/lib
-OPENCV_INCLUDEPATH=/usr/include
+OPENCV_LIBS := -lopencv_imgcodecs -lopencv_imgproc -lopencv_highgui -lopencv_core
+CUDA_LIBS := -lcudadevrt -lcudart_static
 
-###################################################
-# On Macs the default install locations are below #
-###################################################
+.PHONY: all clean
 
-#OPENCV_LIBPATH=/usr/local/lib
-#OPENCV_INCLUDEPATH=/usr/local/include
+all: $(SET_2_EXEC_DIR)/problem_set_2
 
-OPENCV_LIBS=-lopencv_core -lopencv_imgproc -lopencv_highgui
-CUDA_INCLUDEPATH=/usr/local/cuda-5.0/include
+SET_2_HEADER_FILES := $(wildcard $(SET_2_INCL_DIR)/*.hpp)
 
-######################################################
-# On Macs the default install locations are below    #
-# ####################################################
+SET_2_OBJ_FILES := $(SET_2_OBJ_DIR)/main.o \
+	$(SET_2_OBJ_DIR)/student_func.o \
+	$(SET_2_OBJ_DIR)/image.o \
+	$(SET_2_OBJ_DIR)/compare.o \
+	$(SET_2_OBJ_DIR)/reference_calc.o
 
-#CUDA_INCLUDEPATH=/usr/local/cuda/include
-#CUDA_LIBPATH=/usr/local/cuda/lib
+$(SET_2_EXEC_DIR)/problem_set_2: $(SET_2_OBJ_FILES)
+	$(call explain_build,Building and linking the binary file: $@)
+	mkdir -p $(SET_2_EXEC_DIR)
+	cp -r $(SET_2_SRC_DIR)/../data $(SET_2_EXEC_DIR)
+	$(NVCC) $(COMMON_FLAGS) $(CUDA_INCL) $(CUDA_LD_LIB) $(CUDA_LIBS) $(OPENCV_LD_LIB) $(OPENCV_LIBS) $(NVCC_LINT_FLAGS) $^ -o $@
 
-NVCC_OPTS=-O3 -arch=sm_20 -Xcompiler -Wall -Xcompiler -Wextra -m64
+# NOTE: The dependencies are explicitly included
+#		Any change in these would result in a different .o file
+$(SET_2_OBJ_DIR)/main.o: $(SET_2_SRC_DIR)/main.cpp $(SET_2_HEADER_FILES)
+	$(call explain_build,Building the object file: $@)
+	mkdir -p $(SET_2_OBJ_DIR)
+	$(CXX) $(COMMON_FLAGS) $(CXX_LINT_FLAGS) $(CUDA_INCL) $(OPENCV_INCL) -c $< -o $@
 
-GCC_OPTS=-O3 -Wall -Wextra -m64
+$(SET_2_OBJ_DIR)/student_func.o: $(SET_2_SRC_DIR)/student_func.cu $(SET_2_INCL_DIR)/utils.hpp
+	$(call explain_build,Building the object file: $@)
+	mkdir -p $(SET_2_OBJ_DIR)
+	$(NVCC) $(COMMON_FLAGS) $(CUDA_INCL) $(NVCC_LINT_FLAGS) -c $< -o $@
 
-student: main.o student_func.o compare.o reference_calc.o Makefile
-	$(NVCC) -o HW2 main.o student_func.o compare.o reference_calc.o -L $(OPENCV_LIBPATH) $(OPENCV_LIBS) $(NVCC_OPTS)
+$(SET_2_OBJ_DIR)/image.o: $(SET_2_SRC_DIR)/image.cpp $(SET_2_INCL_DIR)/image.hpp
+	$(call explain_build,Building the object file: $@)
+	mkdir -p $(SET_2_OBJ_DIR)
+	$(CXX) $(COMMON_FLAGS) $(CXX_LINT_FLAGS) $(CUDA_INCL) $(OPENCV_INCL) -c $< -o $@
 
-main.o: main.cpp timer.h utils.h HW2.cpp
-	g++ -c main.cpp $(GCC_OPTS) -I $(OPENCV_INCLUDEPATH) -I $(CUDA_INCLUDEPATH)
+$(SET_2_OBJ_DIR)/compare.o: $(SET_2_SRC_DIR)/compare.cpp $(SET_2_INCL_DIR)/compare.hpp
+	$(call explain_build,Building the object file: $@)
+	mkdir -p $(SET_2_OBJ_DIR)
+	$(CXX) $(COMMON_FLAGS) $(CXX_LINT_FLAGS) $(CUDA_INCL) $(OPENCV_INCL) -c $< -o $@
 
-student_func.o: student_func.cu reference_calc.cpp utils.h
-	nvcc -c student_func.cu $(NVCC_OPTS)
-
-compare.o: compare.cpp compare.h
-	g++ -c compare.cpp -I $(OPENCV_INCLUDEPATH) $(GCC_OPTS) -I $(CUDA_INCLUDEPATH)
-
-reference_calc.o: reference_calc.cpp reference_calc.h
-	g++ -c reference_calc.cpp -I $(OPENCV_INCLUDEPATH) $(GCC_OPTS) -I $(CUDA_INCLUDEPATH)
+$(SET_2_OBJ_DIR)/reference_calc.o: $(SET_2_SRC_DIR)/reference_calc.cpp $(SET_2_INCL_DIR)/reference_calc.hpp
+	$(call explain_build,Building the object file: $@)
+	mkdir -p $(SET_2_OBJ_DIR)
+	$(CXX) $(COMMON_FLAGS) $(CXX_LINT_FLAGS) $(OPENCV_INCL) $(CUDA_INCL) -c $< -o $@
 
 clean:
-	rm -f *.o *.png hw
+	rm -rf $(SET_2_OBJ_DIR) $(SET_2_EXEC_DIR)

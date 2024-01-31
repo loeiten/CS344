@@ -50,7 +50,9 @@ SNIPPETS_EXEC_DIR := $(abspath $(EXEC_DIR)/snippets)
 PROBLEM_SETS_OBJ_DIR := $(abspath $(BUILD_OBJ_DIR)/problem_sets)
 PROBLEM_SETS_EXEC_DIR := $(abspath $(EXEC_DIR)/problem_sets)
 SET_1_OBJ_DIR := $(abspath $(PROBLEM_SETS_OBJ_DIR)/set_1)
+SET_2_OBJ_DIR := $(abspath $(PROBLEM_SETS_OBJ_DIR)/set_2)
 SET_1_EXEC_DIR := $(abspath $(PROBLEM_SETS_EXEC_DIR)/set_1)
+SET_2_EXEC_DIR := $(abspath $(PROBLEM_SETS_EXEC_DIR)/set_2)
 
 
 # Define helper functions

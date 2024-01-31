@@ -1,20 +1,21 @@
-// Udacity HW2 Driver
+#include <cuda_runtime.h>  // for cudaFree, cudaDeviceSynchro...
+#include <stdio.h>         // for size_t, printf
+#include <stdlib.h>        // for atof, exit
 
-#include <stdio.h>
+#include <filesystem>  // for absolute, path, create_dire...
+#include <iostream>    // for operator<<, endl, basic_ost...
+#include <string>      // for allocator, operator+, string
 
-#include <iostream>
-#include <string>
+#include "../include/compare.hpp"         // for compareImages
+#include "../include/image.hpp"           // for Image
+#include "../include/reference_calc.hpp"  // for referenceCalculation
+#include "../include/timer.hpp"           // for GpuTimer
+#include "../include/utils.hpp"           // for check, checkCudaErrors
+#include "driver_types.h"                 // for cudaMemcpyDeviceToHost
+#include "vector_types.h"                 // for uchar4
 
-#include "compare.h"
-#include "reference_calc.h"
-#include "timer.h"
-#include "utils.h"
-
-// include the definitions of the above functions for this homework
-#include "HW2.cpp"
-
-/*******  DEFINED IN student_func.cu *********/
-
+// Declare function found in student_func.cu
+// We cannot include this as an header as it contains device code
 void your_gaussian_blur(const uchar4 *const h_inputImageRGBA,
                         uchar4 *const d_inputImageRGBA,
                         uchar4 *const d_outputImageRGBA, const size_t numRows,
@@ -27,8 +28,6 @@ void allocateMemoryAndCopyToGPU(const size_t numRowsImage,
                                 const float *const h_filter,
                                 const size_t filterWidth);
 
-/*******  Begin main *********/
-
 int main(int argc, char **argv) {
   uchar4 *h_inputImageRGBA, *d_inputImageRGBA;
   uchar4 *h_outputImageRGBA, *d_outputImageRGBA;
@@ -37,54 +36,87 @@ int main(int argc, char **argv) {
   float *h_filter;
   int filterWidth;
 
-  std::string input_file;
-  std::string output_file;
-  std::string reference_file;
-  double perPixelError = 0.0;
-  double globalError = 0.0;
+  std::filesystem::path input_path;
+  std::filesystem::path output_path;
+  std::filesystem::path reference_path;
+  std::string base_name = "cinque_terre";
+  std::string extension = "gold";
+  std::string output_dir_name = "output";
+  std::string file_name;
+  double per_pixel_error = 0.0;
+  double global_error = 0.0;
   bool useEpsCheck = false;
   switch (argc) {
+    case 1:
+      file_name = "./data/" + base_name + "." + extension;
+      input_path = std::filesystem::absolute(file_name);
+      file_name = "./" + output_dir_name + "/" + base_name + "_gpu.png";
+      output_path = std::filesystem::absolute(file_name);
+      file_name = "./" + output_dir_name + "/" + base_name + "_cpu.png";
+      reference_path = std::filesystem::absolute(file_name);
+      break;
     case 2:
-      input_file = std::string(argv[1]);
-      output_file = "HW2_output.png";
-      reference_file = "HW2_reference.png";
+      input_path = std::filesystem::absolute(argv[1]);
+      base_name = input_path.stem().string();
+      file_name = "./" + output_dir_name + "/" + base_name + "_gpu.png";
+      output_path = std::filesystem::absolute(file_name);
+      file_name = "./" + output_dir_name + "/" + base_name + "_cpu.png";
+      reference_path = std::filesystem::absolute(file_name);
       break;
     case 3:
-      input_file = std::string(argv[1]);
-      output_file = std::string(argv[2]);
-      reference_file = "HW2_reference.png";
+      input_path = std::filesystem::absolute(argv[1]);
+      output_path = std::filesystem::absolute(argv[2]);
+      base_name = input_path.stem().string();
+      file_name = base_name + "_cpu.png";
+      reference_path = output_path.parent_path().concat(file_name);
       break;
     case 4:
-      input_file = std::string(argv[1]);
-      output_file = std::string(argv[2]);
-      reference_file = std::string(argv[3]);
+      input_path = std::filesystem::absolute(argv[1]);
+      output_path = std::filesystem::absolute(argv[2]);
+      reference_path = std::filesystem::absolute(argv[3]);
       break;
     case 6:
       useEpsCheck = true;
-      input_file = std::string(argv[1]);
-      output_file = std::string(argv[2]);
-      reference_file = std::string(argv[3]);
-      perPixelError = atof(argv[4]);
-      globalError = atof(argv[5]);
+      input_path = std::filesystem::absolute(argv[1]);
+      output_path = std::filesystem::absolute(argv[2]);
+      reference_path = std::filesystem::absolute(argv[3]);
+      per_pixel_error = atof(argv[4]);
+      global_error = atof(argv[5]);
       break;
     default:
-      std::cerr << "Usage: ./HW2 input_file [output_filename] "
-                   "[reference_filename] [perPixelError] [globalError]"
-                << std::endl;
+      std::cerr
+          << "Usage: ./problem_set_2 [input_path] [output_path] "
+             "[reference_path] [per_pixel_error] [global_error]\n"
+             "The output_path and reference_path will be generated by the "
+             "code.\n"
+             "The per_pixel_error and global_error are epsilon tolerances."
+          << std::endl;
       exit(1);
   }
-  // load the image and give us our input and output pointers
-  preProcess(&h_inputImageRGBA, &h_outputImageRGBA, &d_inputImageRGBA,
-             &d_outputImageRGBA, &d_redBlurred, &d_greenBlurred, &d_blueBlurred,
-             &h_filter, &filterWidth, input_file);
+  // Create the directories
+  if (!std::filesystem::exists((output_path.parent_path()))) {
+    std::filesystem::create_directories(output_path.parent_path());
+  }
+  if (!std::filesystem::exists((reference_path.parent_path()))) {
+    std::filesystem::create_directories(reference_path.parent_path());
+  }
 
-  allocateMemoryAndCopyToGPU(numRows(), numCols(), h_filter, filterWidth);
+  Image image;
+
+  // load the image and give us our input and output pointers
+  image.preProcess(&h_inputImageRGBA, &h_outputImageRGBA, &d_inputImageRGBA,
+                   &d_outputImageRGBA, &d_redBlurred, &d_greenBlurred,
+                   &d_blueBlurred, &h_filter, &filterWidth,
+                   input_path.string());
+
+  allocateMemoryAndCopyToGPU(image.numRows(), image.numCols(), h_filter,
+                             filterWidth);
   GpuTimer timer;
   timer.Start();
   // call the students' code
   your_gaussian_blur(h_inputImageRGBA, d_inputImageRGBA, d_outputImageRGBA,
-                     numRows(), numCols(), d_redBlurred, d_greenBlurred,
-                     d_blueBlurred, filterWidth);
+                     image.numRows(), image.numCols(), d_redBlurred,
+                     d_greenBlurred, d_blueBlurred, filterWidth);
   timer.Stop();
   cudaDeviceSynchronize();
   checkCudaErrors(cudaGetLastError());
@@ -99,30 +131,28 @@ int main(int argc, char **argv) {
 
   // check results and output the blurred image
 
-  size_t numPixels = numRows() * numCols();
+  size_t numPixels = image.numRows() * image.numCols();
   // copy the output back to the host
-  checkCudaErrors(cudaMemcpy(h_outputImageRGBA, d_outputImageRGBA__,
+  checkCudaErrors(cudaMemcpy(h_outputImageRGBA, image.d_outputImageRGBA__,
                              sizeof(uchar4) * numPixels,
                              cudaMemcpyDeviceToHost));
 
-  postProcess(output_file, h_outputImageRGBA);
+  image.postProcess(output_path.string(), h_outputImageRGBA);
 
-  referenceCalculation(h_inputImageRGBA, h_outputImageRGBA, numRows(),
-                       numCols(), h_filter, filterWidth);
+  referenceCalculation(h_inputImageRGBA, h_outputImageRGBA, image.numRows(),
+                       image.numCols(), h_filter, filterWidth);
 
-  postProcess(reference_file, h_outputImageRGBA);
+  image.postProcess(reference_path.string(), h_outputImageRGBA);
 
   //  Cheater easy way with OpenCV
   // generateReferenceImage(input_file, reference_file, filterWidth);
 
-  compareImages(reference_file, output_file, useEpsCheck, perPixelError,
-                globalError);
+  compareImages(reference_path.filename(), output_path.filename(), useEpsCheck,
+                per_pixel_error, global_error);
 
   checkCudaErrors(cudaFree(d_redBlurred));
   checkCudaErrors(cudaFree(d_greenBlurred));
   checkCudaErrors(cudaFree(d_blueBlurred));
-
-  cleanUp();
 
   return 0;
 }

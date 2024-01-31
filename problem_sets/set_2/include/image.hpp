@@ -28,12 +28,14 @@ class Image {
   void generateReferenceImage(std::string input_filename,
                               std::string output_filename, int kernel_size);
 
+  // FIXME: This has been made public, check if that is correct
+  uchar4 *d_outputImageRGBA__;
+
  private:
   cv::Mat imageInputRGBA;
   cv::Mat imageOutputRGBA;
 
   uchar4 *d_inputImageRGBA__;
-  uchar4 *d_outputImageRGBA__;
 
   float *h_filter__;
 };

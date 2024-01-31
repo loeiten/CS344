@@ -1,44 +1,46 @@
-#include <cuda.h>
-#include <cuda_runtime.h>
+#include "../include/image.hpp"
 
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/opencv.hpp>
-#include <string>
+#include <cuda_runtime.h>  // for cudaMalloc, cudaMemset, cuda...
+#include <math.h>          // for expf
+#include <stdlib.h>        // for exit
 
-#include "utils.h"
+#include <iostream>  // for operator<<, endl, basic_ostream
+#include <string>    // for string, operator<<
 
-cv::Mat imageInputRGBA;
-cv::Mat imageOutputRGBA;
+#include "../include/utils.hpp"          // for check, checkCudaErrors
+#include "driver_types.h"                // for cudaMemcpyHostToDevice
+#include "opencv2/core/hal/interface.h"  // for CV_8UC4
+#include "opencv2/core/mat.inl.hpp"      // for _InputArray::_InputArray
+#include "opencv2/core/types.hpp"        // for Size2i
+#include "opencv2/imgcodecs.hpp"         // for imread, imwrite, IMREAD_COLOR
+#include "opencv2/imgproc.hpp"           // for cvtColor, GaussianBlur, COLO...
+#include "vector_types.h"                // for uchar4
 
-uchar4 *d_inputImageRGBA__;
-uchar4 *d_outputImageRGBA__;
+Image::~Image() {
+  cudaFree(d_inputImageRGBA__);
+  cudaFree(d_outputImageRGBA__);
+  delete[] h_filter__;
+}
 
-float *h_filter__;
+std::size_t Image::numRows() { return imageInputRGBA.rows; }
+std::size_t Image::numCols() { return imageInputRGBA.cols; }
 
-size_t numRows() { return imageInputRGBA.rows; }
-size_t numCols() { return imageInputRGBA.cols; }
-
-// return types are void since any internal error will be handled by quitting
-// no point in returning error codes...
-// returns a pointer to an RGBA version of the input image
-// and a pointer to the single channel grey-scale output
-// on both the host and device
-void preProcess(uchar4 **h_inputImageRGBA, uchar4 **h_outputImageRGBA,
-                uchar4 **d_inputImageRGBA, uchar4 **d_outputImageRGBA,
-                unsigned char **d_redBlurred, unsigned char **d_greenBlurred,
-                unsigned char **d_blueBlurred, float **h_filter,
-                int *filterWidth, const std::string &filename) {
+void Image::preProcess(uchar4 **h_inputImageRGBA, uchar4 **h_outputImageRGBA,
+                       uchar4 **d_inputImageRGBA, uchar4 **d_outputImageRGBA,
+                       unsigned char **d_redBlurred,
+                       unsigned char **d_greenBlurred,
+                       unsigned char **d_blueBlurred, float **h_filter,
+                       int *filterWidth, const std::string &filename) {
   // make sure the context initializes ok
   checkCudaErrors(cudaFree(0));
 
-  cv::Mat image = cv::imread(filename.c_str(), CV_LOAD_IMAGE_COLOR);
+  cv::Mat image = cv::imread(filename.c_str(), cv::IMREAD_COLOR);
   if (image.empty()) {
     std::cerr << "Couldn't open file: " << filename << std::endl;
     exit(1);
   }
 
-  cv::cvtColor(image, imageInputRGBA, CV_BGR2RGBA);
+  cv::cvtColor(image, imageInputRGBA, cv::COLOR_BGR2RGBA);
 
   // allocate memory for the output
   imageOutputRGBA.create(image.rows, image.cols, CV_8UC4);
@@ -53,7 +55,7 @@ void preProcess(uchar4 **h_inputImageRGBA, uchar4 **h_outputImageRGBA,
   *h_inputImageRGBA = (uchar4 *)imageInputRGBA.ptr<unsigned char>(0);
   *h_outputImageRGBA = (uchar4 *)imageOutputRGBA.ptr<unsigned char>(0);
 
-  const size_t numPixels = numRows() * numCols();
+  const std::size_t numPixels = numRows() * numCols();
   // allocate memory on the device for both input and output
   checkCudaErrors(cudaMalloc(d_inputImageRGBA, sizeof(uchar4) * numPixels));
   checkCudaErrors(cudaMalloc(d_outputImageRGBA, sizeof(uchar4) * numPixels));
@@ -114,26 +116,21 @@ void preProcess(uchar4 **h_inputImageRGBA, uchar4 **h_outputImageRGBA,
       cudaMemset(*d_blueBlurred, 0, sizeof(unsigned char) * numPixels));
 }
 
-void postProcess(const std::string &output_file, uchar4 *data_ptr) {
+void Image::postProcess(const std::string &output_file, uchar4 *data_ptr) {
   cv::Mat output(numRows(), numCols(), CV_8UC4, (void *)data_ptr);
 
   cv::Mat imageOutputBGR;
-  cv::cvtColor(output, imageOutputBGR, CV_RGBA2BGR);
+  cv::cvtColor(output, imageOutputBGR, cv::COLOR_RGBA2BGR);
   // output the image
   cv::imwrite(output_file.c_str(), imageOutputBGR);
-}
-
-void cleanUp(void) {
-  cudaFree(d_inputImageRGBA__);
-  cudaFree(d_outputImageRGBA__);
-  delete[] h_filter__;
 }
 
 // An unused bit of code showing how to accomplish this assignment using OpenCV.
 // It is much faster
 //    than the naive implementation in reference_calc.cpp.
-void generateReferenceImage(std::string input_file, std::string reference_file,
-                            int kernel_size) {
+void Image::generateReferenceImage(std::string input_file,
+                                   std::string reference_file,
+                                   int kernel_size) {
   cv::Mat input = cv::imread(input_file);
   // Create an identical image for the output as a placeholder
   cv::Mat reference = cv::imread(input_file);

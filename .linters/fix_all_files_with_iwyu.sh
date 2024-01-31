@@ -22,6 +22,7 @@ find "$PARENT_DIR" -type f \( -name "*.cpp" -o -name "*.hpp" \) | while read -r 
     -Xiwyu --mapping_file=iwyu.imp \
     -Xiwyu --update_comments \
     -I/usr/local/cuda-12.3/include \
+    -I/usr/include/opencv4 \
     "$found_file" \
     > /tmp/iwyu.out 2>&1
     fix_includes.py \

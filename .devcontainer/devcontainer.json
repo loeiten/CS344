@@ -5,7 +5,31 @@
     "context": ".."
   },
   "remoteUser": "root",
-"mounts": [
+  "mounts": [
     "source=${localWorkspaceFolder},target=/CS344,type=bind,consistency=cached"
-  ]
+  ],
+  "customizations": {
+    "vscode": {
+      // Bug fix on Mac: https://github.com/microsoft/vscode-remote-release/issues/8169
+      "settings": {
+        "extensions.verifySignature": false
+      },
+      "extensions": [
+        "llvm-vs-code-extensions.vscode-clangd",
+        "kriegalex.vscode-cudacpp",
+        "timonwong.shellcheck",
+        "ms-vscode.makefile-tools",
+        "cschlosser.doxdocgen",
+        "cheshirekow.cmake-format",
+        "streetsidesoftware.code-spell-checker",
+        "ms-vscode.cpptools-extension-pack",
+        "ms-vscode.cpptools-themes",
+        "twxs.cmake",
+        "ms-vscode.cmake-tools",
+        "DavidAnson.vscode-markdownlint",
+        "nvidia.nsight-vscode-edition",
+        "wayou.vscode-todo-highlight"
+      ]
+    }
+  }
 }

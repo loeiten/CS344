@@ -144,10 +144,11 @@ int main(int argc, char **argv) {
 
   image.postProcess(reference_path.string(), h_outputImageRGBA);
 
-  //  Cheater easy way with OpenCV
-  // generateReferenceImage(input_file, reference_file, filterWidth);
+  // Cheater easy way with OpenCV
+  // image.generateReferenceImage(input_path.string(), reference_path.string(),
+  // filterWidth);
 
-  compareImages(reference_path.filename(), output_path.filename(), useEpsCheck,
+  compareImages(reference_path.string(), output_path.string(), useEpsCheck,
                 per_pixel_error, global_error);
 
   checkCudaErrors(cudaFree(d_redBlurred));

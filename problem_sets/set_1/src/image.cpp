@@ -97,4 +97,5 @@ void Image::generateReferenceImage(std::string input_filename,
   cv::Mat reference = cv::imread(input_filename, cv::IMREAD_GRAYSCALE);
 
   cv::imwrite(output_filename, reference);
+  std::cout << "File written to: " << output_filename << std::endl;
 }

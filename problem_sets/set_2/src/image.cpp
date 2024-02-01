@@ -141,6 +141,7 @@ void Image::postProcess(const std::string &output_file, uchar4 *data_ptr) {
   cv::cvtColor(output, imageOutputBGR, cv::COLOR_RGBA2BGR);
   // output the image
   cv::imwrite(output_file.c_str(), imageOutputBGR);
+  std::cout << "File written to: " << output_file << std::endl;
 }
 
 // An unused bit of code showing how to accomplish this assignment using OpenCV.
@@ -154,4 +155,5 @@ void Image::generateReferenceImage(std::string input_file,
   cv::Mat reference = cv::imread(input_file);
   cv::GaussianBlur(input, reference, cv::Size2i(kernel_size, kernel_size), 0);
   cv::imwrite(reference_file, reference);
+  std::cout << "File written to: " << reference_file << std::endl;
 }

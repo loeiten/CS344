@@ -1,7 +1,8 @@
 #include <cuda_runtime.h>  // for cudaFree, cudaDeviceSynchro...
-#include <stdio.h>         // for size_t, printf
+#include <stdio.h>         // for printf
 #include <stdlib.h>        // for atof, exit
 
+#include <cstddef>     // for size_t
 #include <filesystem>  // for absolute, path, create_dire...
 #include <iostream>    // for operator<<, endl, basic_ost...
 #include <string>      // for allocator, operator+, string
@@ -16,17 +17,20 @@
 
 // Declare function found in student_func.cu
 // We cannot include this as an header as it contains device code
-void your_gaussian_blur(const uchar4 *const h_inputImageRGBA,
-                        uchar4 *const d_inputImageRGBA,
-                        uchar4 *const d_outputImageRGBA, const size_t numRows,
-                        const size_t numCols, unsigned char *d_redBlurred,
-                        unsigned char *d_greenBlurred,
-                        unsigned char *d_blueBlurred, const int filterWidth);
+void your_gaussian_blur(
+    const uchar4 *const h_inputImageRGBA, uchar4 *const d_inputImageRGBA,
+    uchar4 *const d_outputImageRGBA, const std::size_t numRows,
+    const std::size_t numCols, unsigned char const *const d_red,
+    unsigned char const *const d_green, unsigned char const *const d_blue,
+    unsigned char *d_redBlurred, unsigned char *d_greenBlurred,
+    unsigned char *d_blueBlurred, const int filterWidth);
 
-void allocateMemoryAndCopyToGPU(const size_t numRowsImage,
-                                const size_t numColsImage,
+void allocateMemoryAndCopyToGPU(const std::size_t numRowsImage,
+                                const std::size_t numColsImage,
                                 const float *const h_filter,
-                                const size_t filterWidth);
+                                const std::size_t filterWidth, float *d_filter,
+                                unsigned char *d_red, unsigned char *d_green,
+                                unsigned char *d_blue);
 
 int main(int argc, char **argv) {
   uchar4 *h_inputImageRGBA, *d_inputImageRGBA;
@@ -68,7 +72,7 @@ int main(int argc, char **argv) {
       output_path = std::filesystem::absolute(argv[2]);
       base_name = input_path.stem().string();
       file_name = base_name + "_cpu.png";
-      reference_path = output_path.parent_path().concat(file_name);
+      reference_path = output_path.parent_path() / file_name;
       break;
     case 4:
       input_path = std::filesystem::absolute(argv[1]);
@@ -109,14 +113,18 @@ int main(int argc, char **argv) {
                    &d_blueBlurred, &h_filter, &filterWidth,
                    input_path.string());
 
+  float *d_filter;
+  unsigned char *d_red;
+  unsigned char *d_green;
+  unsigned char *d_blue;
   allocateMemoryAndCopyToGPU(image.numRows(), image.numCols(), h_filter,
-                             filterWidth);
+                             filterWidth, d_filter, d_red, d_green, d_blue);
   GpuTimer timer;
   timer.Start();
   // call the students' code
   your_gaussian_blur(h_inputImageRGBA, d_inputImageRGBA, d_outputImageRGBA,
-                     image.numRows(), image.numCols(), d_redBlurred,
-                     d_greenBlurred, d_blueBlurred, filterWidth);
+                     image.numRows(), image.numCols(), d_red, d_green, d_blue,
+                     d_redBlurred, d_greenBlurred, d_blueBlurred, filterWidth);
   timer.Stop();
   cudaDeviceSynchronize();
   checkCudaErrors(cudaGetLastError());
@@ -131,7 +139,7 @@ int main(int argc, char **argv) {
 
   // check results and output the blurred image
 
-  size_t numPixels = image.numRows() * image.numCols();
+  std::size_t numPixels = image.numRows() * image.numCols();
   // copy the output back to the host
   checkCudaErrors(cudaMemcpy(h_outputImageRGBA, image.d_outputImageRGBA__,
                              sizeof(uchar4) * numPixels,

@@ -1,10 +1,11 @@
-#include <cuda_runtime.h>  // for cudaDeviceSynchronize
-#include <driver_types.h>  // for cudaMemcpyDeviceToHost
-#include <stdio.h>         // for printf, size_t
-#include <stdlib.h>        // for atof, exit
-#include <vector_types.h>  // for uchar4
+#include <cuda_runtime.h>      // for cudaDeviceSynchronize
+#include <cuda_runtime_api.h>  // for cudaMemcpy, cudaGetLastError
+#include <driver_types.h>      // for cudaMemcpyDeviceToHost
+#include <stdio.h>             // for printf, size_t
+#include <stdlib.h>            // for atof, exit
+#include <vector_types.h>      // for uchar4
 
-#include <filesystem>  // for pat, absolute
+#include <filesystem>  // for path, absolute
 #include <iostream>    // for operator<<, endl, basic_o...
 #include <string>      // for string
 
@@ -56,7 +57,7 @@ int main(int argc, char **argv) {
       output_path = std::filesystem::absolute(argv[2]);
       base_name = input_path.stem().string();
       file_name = base_name + "_cpu.png";
-      reference_path = output_path.parent_path().concat(file_name);
+      reference_path = output_path.parent_path() / file_name;
       break;
     case 4:
       input_path = std::filesystem::absolute(argv[1]);

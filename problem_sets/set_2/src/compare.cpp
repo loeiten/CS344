@@ -33,9 +33,8 @@ void compareImages(std::string reference_filename, std::string test_filename,
   diff = diffSingleChannel.reshape(reference.channels(), 0);
 
   std::filesystem::path diff_path =
-      std::filesystem::absolute(reference_filename)
-          .parent_path()
-          .concat("cpu_gpu_difference.png");
+      std::filesystem::absolute(reference_filename).parent_path() /
+      "cpu_gpu_difference.png";
   cv::imwrite(diff_path.string(), diff);
   std::cout << "Image written to: " << diff_path << std::endl;
   // OK, now we can start comparing values...

@@ -31,6 +31,8 @@
 // You should fill in the kernel as well as set the block and grid sizes
 // so that the entire image is processed.
 
+#include <cuda_runtime.h>              // for cudaDeviceSynchronize
+#include <cuda_runtime_api.h>          // for cudaMemcpy, cudaGetLastError
 #include <device_launch_parameters.h>  // for blockIdx, threadIdx
 #include <vector_types.h>              // for uchar4, dim3
 
@@ -67,7 +69,7 @@ __global__ void rgba_to_greyscale(const uchar4* const rgbaImage,
   int y = blockIdx.y * blockDim.y + threadIdx.y;
   int global_idx = numCols * y + x;
 
-  if (global_idx < max_idx) {
+  if ((x < numCols) && (y < numRows)) {
     greyImage[global_idx] = .299f * rgbaImage[global_idx].x +
                             .587f * rgbaImage[global_idx].y +
                             .114f * rgbaImage[global_idx].z;
@@ -79,8 +81,8 @@ void your_rgba_to_greyscale(uchar4* const d_rgbaImage,
                             std::size_t numRows, std::size_t numCols) {
   // You must fill in the correct sizes for the blockSize and gridSize
   // currently only one block with one thread is being launched
-  // const dim3 blockSize(1, 1, 1);  // TODO
-  // const dim3 gridSize(1, 1, 1);   // TODO
+  // const dim3 blockSize(1, 1, 1);  // TODO:
+  // const dim3 gridSize(1, 1, 1);   // TODO:
 
   // Solution:
   // Parameters are x, y, z
@@ -102,8 +104,7 @@ void your_rgba_to_greyscale(uchar4* const d_rgbaImage,
   //
   // * these are called streaming multiprocessors or (sm)
   //
-  // Assuming we have relatively small images we can cap the threads per block
-  // to 1024
+  // We have 1024 threads to our disposal
   // Since we are operating in 2D, it means that
   // max_threads_per_dim = sqrt(1024) = 32
   constexpr int max_threads_per_dim = 32;

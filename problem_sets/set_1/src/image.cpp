@@ -22,8 +22,8 @@ Image::~Image() {
   cudaFree(d_greyImage__);
 }
 
-std::size_t Image::numRows() { return imageRGBA.rows; }
-std::size_t Image::numCols() { return imageRGBA.cols; }
+std::size_t Image::num_rows() { return imageRGBA.rows; }
+std::size_t Image::num_cols() { return imageRGBA.cols; }
 
 void Image::preProcess(uchar4 **inputImage, unsigned char **greyImage,
                        uchar4 **d_rgbaImage, unsigned char **d_greyImage,
@@ -65,7 +65,7 @@ void Image::preProcess(uchar4 **inputImage, unsigned char **greyImage,
 
   *greyImage = imageGrey.ptr<unsigned char>(0);
 
-  const std::size_t numPixels = numRows() * numCols();
+  const std::size_t numPixels = num_rows() * num_cols();
   // allocate memory on the device for both input and output
   checkCudaErrors(cudaMalloc(d_rgbaImage, sizeof(uchar4) * numPixels));
   checkCudaErrors(cudaMalloc(d_greyImage, sizeof(unsigned char) * numPixels));
@@ -85,7 +85,7 @@ void Image::preProcess(uchar4 **inputImage, unsigned char **greyImage,
 
 void Image::postProcess(const std::string &output_file,
                         unsigned char *data_ptr) {
-  cv::Mat output(numRows(), numCols(), CV_8UC1, (void *)data_ptr);
+  cv::Mat output(num_rows(), num_cols(), CV_8UC1, (void *)data_ptr);
 
   // output the image
   cv::imwrite(output_file.c_str(), output);

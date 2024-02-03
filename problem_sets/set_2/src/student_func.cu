@@ -35,8 +35,8 @@
 //****************************************************************************
 
 // You must fill in the gaussian_blur kernel to perform the blurring of the
-// inputChannel, using the array of weights, and put the result in the
-// outputChannel.
+// input_channel, using the array of weights, and put the result in the
+// output_channel.
 
 // Here is an example of computing a blur, using a weighted average, for a
 // single pixel in a small image.
@@ -67,7 +67,7 @@
 
 // Note that the array of weights is square, so its height is the same as its
 // width. We refer to the array of weights as a filter, and we refer to its
-// width with the variable filterWidth.
+// width with the variable filter_width.
 
 //****************************************************************************
 
@@ -86,12 +86,12 @@
 // we've done in the code we're supplying you. Here is an example of the unsafe
 // way to allocate memory on the GPU:
 //
-// cudaMalloc(&d_red, sizeof(unsigned char) * numRows * numCols);
+// cudaMalloc(&d_red, sizeof(unsigned char) * num_rows * num_cols);
 //
 // Here is an example of the safe way to do the same thing:
 //
-// checkCudaErrors(cudaMalloc(&d_red, sizeof(unsigned char) * numRows *
-// numCols));
+// checkCudaErrors(cudaMalloc(&d_red, sizeof(unsigned char) * num_rows *
+// num_cols));
 //
 // Writing code the safe way requires slightly more typing, but is very helpful
 // for catching mistakes. If you write code the unsafe way and you make a
@@ -114,10 +114,10 @@
 
 #include "../include/utils.hpp"  // for checkCudaErrors
 
-__global__ void gaussian_blur(const unsigned char* const inputChannel,
-                              unsigned char* const outputChannel, int numRows,
-                              int numCols, const float* const filter,
-                              const int filterWidth) {
+__global__ void gaussian_blur(const unsigned char* const input_channel,
+                              unsigned char* const output_channel, int num_rows,
+                              int num_cols, const float* const filter,
+                              const int filter_width) {
   // TODO:
 
   // NOTE: Be sure to compute any intermediate results in floating point
@@ -127,8 +127,8 @@ __global__ void gaussian_blur(const unsigned char* const inputChannel,
   // the image. You'll want code that performs the following check before
   // accessing GPU memory:
   //
-  // if ( absolute_image_position_x >= numCols ||
-  //      absolute_image_position_y >= numRows )
+  // if ( absolute_image_position_x >= num_cols ||
+  //      absolute_image_position_y >= num_rows )
   // {
   //     return;
   // }
@@ -145,12 +145,12 @@ __global__ void gaussian_blur(const unsigned char* const inputChannel,
   int absolute_image_position_x = blockIdx.x * blockDim.x + threadIdx.x;
   int absolute_image_position_y = blockIdx.y * blockDim.y + threadIdx.y;
 
-  if (absolute_image_position_x >= numCols ||
-      absolute_image_position_y >= numRows) {
+  if (absolute_image_position_x >= num_cols ||
+      absolute_image_position_y >= num_rows) {
     return;
   }
-  int central_sequential_image_position =
-      numCols * absolute_image_position_y + absolute_image_position_x;
+  int filter_center_in_image_abs_idx =
+      num_cols * absolute_image_position_y + absolute_image_position_x;
 
   // Loop through the filter
   // Optimiziation: If we have more pixels than threads, we can calculate the
@@ -182,6 +182,12 @@ __global__ void gaussian_blur(const unsigned char* const inputChannel,
   //                For cinque_terre.gold we have 557x313 pixels per channel
   //                if each pixel is a uchar, then it's one byte, so
   //                2*Bytes in image (per channel) = 3.48682*1e5 bytes
+  //                WARNING: This is likely too little to measure
+  //                         the performance as we're also measuring the
+  //                         kernel launch overheads etc.
+  //                         To get a more realistic number either pick a larger
+  //                         image, or make the launch so that it loops over
+  //                         more data
   //
   //                Memory bandwidth for A100 40 GB
   //                = 1555GB/sec = 1.555*1e12 bytes/s
@@ -205,18 +211,29 @@ __global__ void gaussian_blur(const unsigned char* const inputChannel,
   // filter_rel_row =
   //   (filter_abs_idx - filter_mid - filter_rel_col)/filter_width
 
+  int last_filter_idx = filter_width * filter_width - 1;
+  // NOTE: The filter_width must be odd for there to be a one-celled mid-point
+  int filter_mid = last_filter_idx / 2;
   float center_value = 0;
-  for (int filter_position = 0; filter_position < filterWidth * filterWidth;
-       ++filter_position) {
-    // FIXME: You are here
-    int cur_sequential_image_position = 0;
+  for (int filter_idx = 0; filter_idx <= last_filter_idx; ++filter_idx) {
+    int filter_rel_col = filter_idx % filter_width - (filter_width - 1) / 2;
+    int filter_rel_row =
+        (filter_abs_idx - filter_mid - filter_rel_col) / filter_width;
+    int image_idx = filter_center_in_image_abs_idx + filter_rel_row * num_cols +
+                    filter_rel_col;
+    // NOTE: We have no contention when reading (as the values do not change)
+    // and we have no contention when writing (as there is only one place
+    // writing to the image). However, it is inefficient as threads are
+    // re-reading the values of the input_channel and filter
+    // filter_width*filter_width times
+    output_channel[image_idx] = input_channel[image_idx] + filter[filter_idx];
   }
 }
 
 // This kernel takes in an image represented as a uchar4 and splits
 // it into three images consisting of only one color channel each
 __global__ void separateChannels(const uchar4* const inputImageRGBA,
-                                 int numRows, int numCols,
+                                 int num_rows, int num_cols,
                                  unsigned char* const redChannel,
                                  unsigned char* const greenChannel,
                                  unsigned char* const blueChannel) {
@@ -226,8 +243,8 @@ __global__ void separateChannels(const uchar4* const inputImageRGBA,
   // the image. You'll want code that performs the following check before
   // accessing GPU memory:
   //
-  // if ( absolute_image_position_x >= numCols ||
-  //      absolute_image_position_y >= numRows )
+  // if ( absolute_image_position_x >= num_cols ||
+  //      absolute_image_position_y >= num_rows )
   // {
   //     return;
   // }
@@ -237,12 +254,12 @@ __global__ void separateChannels(const uchar4* const inputImageRGBA,
   int absolute_image_position_x = blockIdx.x * blockDim.x + threadIdx.x;
   int absolute_image_position_y = blockIdx.y * blockDim.y + threadIdx.y;
 
-  if (absolute_image_position_x >= numCols ||
-      absolute_image_position_y >= numRows) {
+  if (absolute_image_position_x >= num_cols ||
+      absolute_image_position_y >= num_rows) {
     return;
   }
   int sequential_image_position =
-      numCols * absolute_image_position_y + absolute_image_position_x;
+      num_cols * absolute_image_position_y + absolute_image_position_x;
 
   redChannel[sequential_image_position] =
       inputImageRGBA[sequential_image_position].x;
@@ -258,16 +275,16 @@ __global__ void separateChannels(const uchar4* const inputImageRGBA,
 __global__ void recombineChannels(const unsigned char* const redChannel,
                                   const unsigned char* const greenChannel,
                                   const unsigned char* const blueChannel,
-                                  uchar4* const outputImageRGBA, int numRows,
-                                  int numCols) {
+                                  uchar4* const outputImageRGBA, int num_rows,
+                                  int num_cols) {
   const int2 thread_2D_pos = make_int2(blockIdx.x * blockDim.x + threadIdx.x,
                                        blockIdx.y * blockDim.y + threadIdx.y);
 
-  const int thread_1D_pos = thread_2D_pos.y * numCols + thread_2D_pos.x;
+  const int thread_1D_pos = thread_2D_pos.y * num_cols + thread_2D_pos.x;
 
   // make sure we don't try and access memory outside the image
   // by having any threads mapped there return early
-  if (thread_2D_pos.x >= numCols || thread_2D_pos.y >= numRows) {
+  if (thread_2D_pos.x >= num_cols || thread_2D_pos.y >= num_rows) {
     return;
   }
 
@@ -281,21 +298,21 @@ __global__ void recombineChannels(const unsigned char* const redChannel,
   outputImageRGBA[thread_1D_pos] = outputPixel;
 }
 
-void allocateMemoryAndCopyToGPU(const std::size_t numRowsImage,
-                                const std::size_t numColsImage,
+void allocateMemoryAndCopyToGPU(const std::size_t num_rowsImage,
+                                const std::size_t num_colsImage,
                                 const float* const h_filter,
-                                const std::size_t filterWidth, float* d_filter,
+                                const std::size_t filter_width, float* d_filter,
                                 unsigned char* d_red, unsigned char* d_green,
                                 unsigned char* d_blue) {
   // NOTE: This is the first cuda function that will be called from main
   // allocate memory for the three different channels
   // original
-  checkCudaErrors(
-      cudaMalloc(&d_red, sizeof(unsigned char) * numRowsImage * numColsImage));
   checkCudaErrors(cudaMalloc(
-      &d_green, sizeof(unsigned char) * numRowsImage * numColsImage));
-  checkCudaErrors(
-      cudaMalloc(&d_blue, sizeof(unsigned char) * numRowsImage * numColsImage));
+      &d_red, sizeof(unsigned char) * num_rowsImage * num_colsImage));
+  checkCudaErrors(cudaMalloc(
+      &d_green, sizeof(unsigned char) * num_rowsImage * num_colsImage));
+  checkCudaErrors(cudaMalloc(
+      &d_blue, sizeof(unsigned char) * num_rowsImage * num_colsImage));
 
   // TODO:
   // Allocate memory for the filter on the GPU
@@ -307,24 +324,24 @@ void allocateMemoryAndCopyToGPU(const std::size_t numRowsImage,
   // Solution:
   // NOTE: We've sanitized the code and changed d_filter to an input parameter
   checkCudaErrors(
-      cudaMalloc(&d_filter, sizeof(float) * filterWidth * filterWidth));
+      cudaMalloc(&d_filter, sizeof(float) * filter_width * filter_width));
 
   // TODO:
   // Copy the filter on the host (h_filter) to the memory you just allocated
   // on the GPU.  cudaMemcpy(dst, src, numBytes, cudaMemcpyHostToDevice);
   // Remember to use checkCudaErrors!
   checkCudaErrors(cudaMemcpy(d_filter, h_filter,
-                             sizeof(float) * filterWidth * filterWidth,
+                             sizeof(float) * filter_width * filter_width,
                              cudaMemcpyHostToDevice));
 }
 
 void your_gaussian_blur(
     const uchar4* const h_inputImageRGBA, uchar4* const d_inputImageRGBA,
-    uchar4* const d_outputImageRGBA, const std::size_t numRows,
-    const std::size_t numCols, unsigned char const* const d_red,
+    uchar4* const d_outputImageRGBA, const std::size_t num_rows,
+    const std::size_t num_cols, unsigned char const* const d_red,
     unsigned char const* const d_green, unsigned char const* const d_blue,
-    unsigned char* d_redBlurred, unsigned char* d_greenBlurred,
-    unsigned char* d_blueBlurred, const int filterWidth) {
+    unsigned char* d_red_blurred, unsigned char* d_green_blurred,
+    unsigned char* d_blue_blurred, const int filter_width) {
   // TODO: Set reasonable block size (i.e., number of threads per block)
   // Solution:
   // We set one thread per pixel, see ../../set_1/src/student_func.cu for
@@ -337,17 +354,17 @@ void your_gaussian_blur(
   // from the image size and and block size.
   // Solution:
   const int x_blocks =
-      (numCols + (max_threads_per_dim - 1)) / max_threads_per_dim;
+      (num_cols + (max_threads_per_dim - 1)) / max_threads_per_dim;
   const int y_blocks =
-      (numRows + (max_threads_per_dim - 1)) / max_threads_per_dim;
+      (num_rows + (max_threads_per_dim - 1)) / max_threads_per_dim;
   const dim3 gridSize(x_blocks, y_blocks, 1);
 
   // TODO: Launch a kernel for separating the RGBA image into different color
   // channels
   // Solution:
-  separateChannels<<<gridSize, blockSize>>>(d_inputImageRGBA, numRows, numCols,
-                                            d_redBlurred, d_greenBlurred,
-                                            d_blueBlurred);
+  separateChannels<<<gridSize, blockSize>>>(d_inputImageRGBA, num_rows,
+                                            num_cols, d_red_blurred,
+                                            d_green_blurred, d_blue_blurred);
 
   // Call cudaDeviceSynchronize(), then call checkCudaErrors() immediately after
   // launching your kernel to make sure that you didn't make any mistakes.
@@ -356,6 +373,15 @@ void your_gaussian_blur(
 
   // TODO: Call your convolution kernel here 3 times, once for each color
   // channel.
+  gaussian_blur < < < gridSize,
+      blockSize >>>>
+          (d_red, d_red_blurred, num_rows, num_cols, d_filter, filter_width);
+  gaussian_blur < < < gridSize,
+      blockSize >>>> (d_green, d_green_blurred, num_rows, num_cols, d_filter,
+                      filter_width);
+  gaussian_blur < < < gridSize,
+      blockSize >>>>
+          (d_blue, d_blue_blurred, num_rows, num_cols, d_filter, filter_width);
 
   // Again, call cudaDeviceSynchronize(), then call checkCudaErrors()
   // immediately after launching your kernel to make sure that you didn't make
@@ -368,17 +394,13 @@ void your_gaussian_blur(
   //
   // NOTE: This kernel launch depends on the gridSize and blockSize variables,
   // which you must set yourself.
-  recombineChannels<<<gridSize, blockSize>>>(d_redBlurred, d_greenBlurred,
-                                             d_blueBlurred, d_outputImageRGBA,
-                                             numRows, numCols);
+  recombineChannels<<<gridSize, blockSize>>>(d_red_blurred, d_green_blurred,
+                                             d_blue_blurred, d_outputImageRGBA,
+                                             num_rows, num_cols);
   cudaDeviceSynchronize();
   checkCudaErrors(cudaGetLastError());
 }
 
 // Free all the memory that we allocated
 // TODO: make sure you free any arrays that you allocated
-void cleanup() {
-  checkCudaErrors(cudaFree(d_red));
-  checkCudaErrors(cudaFree(d_green));
-  checkCudaErrors(cudaFree(d_blue));
-}
+// Solution: Moved to main.cpp

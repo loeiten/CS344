@@ -12,8 +12,8 @@ class Image {
  public:
   Image() = default;
   ~Image();
-  std::size_t numRows();
-  std::size_t numCols();
+  std::size_t num_rows();
+  std::size_t num_cols();
 
   // return types are void since any internal error will be handled by quitting
   // no point in returning error codes...

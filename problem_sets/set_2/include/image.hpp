@@ -12,16 +12,17 @@ class Image {
  public:
   Image() = default;
   ~Image();
-  std::size_t numRows();
-  std::size_t numCols();
+  std::size_t num_rows();
+  std::size_t num_cols();
 
   // return types are void since any internal error will be handled by quitting
   // no point in returning error codes...
   void preProcess(uchar4 **h_inputImageRGBA, uchar4 **h_outputImageRGBA,
                   uchar4 **d_inputImageRGBA, uchar4 **d_outputImageRGBA,
-                  unsigned char **d_redBlurred, unsigned char **d_greenBlurred,
-                  unsigned char **d_blueBlurred, float **h_filter,
-                  int *filterWidth, const std::string &filename);
+                  unsigned char **d_red_blurred,
+                  unsigned char **d_green_blurred,
+                  unsigned char **d_blue_blurred, float **h_filter,
+                  int *filter_width, const std::string &filename);
 
   void postProcess(const std::string &output_file, uchar4 *data_ptr);
 

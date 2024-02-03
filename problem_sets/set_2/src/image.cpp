@@ -25,15 +25,15 @@ Image::~Image() {
   delete[] h_filter__;
 }
 
-std::size_t Image::numRows() { return imageInputRGBA.rows; }
-std::size_t Image::numCols() { return imageInputRGBA.cols; }
+std::size_t Image::num_rows() { return imageInputRGBA.rows; }
+std::size_t Image::num_cols() { return imageInputRGBA.cols; }
 
 void Image::preProcess(uchar4 **h_inputImageRGBA, uchar4 **h_outputImageRGBA,
                        uchar4 **d_inputImageRGBA, uchar4 **d_outputImageRGBA,
-                       unsigned char **d_redBlurred,
-                       unsigned char **d_greenBlurred,
-                       unsigned char **d_blueBlurred, float **h_filter,
-                       int *filterWidth, const std::string &filename) {
+                       unsigned char **d_red_blurred,
+                       unsigned char **d_green_blurred,
+                       unsigned char **d_blue_blurred, float **h_filter,
+                       int *filter_width, const std::string &filename) {
   // make sure the context initializes ok
   checkCudaErrors(cudaFree(0));
 
@@ -73,7 +73,7 @@ void Image::preProcess(uchar4 **h_inputImageRGBA, uchar4 **h_outputImageRGBA,
   *h_inputImageRGBA = h_inputImageRGBA_;
   *h_outputImageRGBA = h_outputImageRGBA_;
 
-  const std::size_t numPixels = numRows() * numCols();
+  const std::size_t numPixels = num_rows() * num_cols();
   // allocate memory on the device for both input and output
   checkCudaErrors(cudaMalloc(d_inputImageRGBA, sizeof(uchar4) * numPixels));
   checkCudaErrors(cudaMalloc(d_outputImageRGBA, sizeof(uchar4) * numPixels));
@@ -94,7 +94,7 @@ void Image::preProcess(uchar4 **h_inputImageRGBA, uchar4 **h_outputImageRGBA,
   const int blurKernelWidth = 9;
   const float blurKernelSigma = 2.;
 
-  *filterWidth = blurKernelWidth;
+  *filter_width = blurKernelWidth;
 
   // create and fill the filter we will convolve with
   *h_filter = new float[blurKernelWidth * blurKernelWidth];
@@ -122,20 +122,21 @@ void Image::preProcess(uchar4 **h_inputImageRGBA, uchar4 **h_outputImageRGBA,
   }
 
   // blurred
-  checkCudaErrors(cudaMalloc(d_redBlurred, sizeof(unsigned char) * numPixels));
+  checkCudaErrors(cudaMalloc(d_red_blurred, sizeof(unsigned char) * numPixels));
   checkCudaErrors(
-      cudaMalloc(d_greenBlurred, sizeof(unsigned char) * numPixels));
-  checkCudaErrors(cudaMalloc(d_blueBlurred, sizeof(unsigned char) * numPixels));
+      cudaMalloc(d_green_blurred, sizeof(unsigned char) * numPixels));
   checkCudaErrors(
-      cudaMemset(*d_redBlurred, 0, sizeof(unsigned char) * numPixels));
+      cudaMalloc(d_blue_blurred, sizeof(unsigned char) * numPixels));
   checkCudaErrors(
-      cudaMemset(*d_greenBlurred, 0, sizeof(unsigned char) * numPixels));
+      cudaMemset(*d_red_blurred, 0, sizeof(unsigned char) * numPixels));
   checkCudaErrors(
-      cudaMemset(*d_blueBlurred, 0, sizeof(unsigned char) * numPixels));
+      cudaMemset(*d_green_blurred, 0, sizeof(unsigned char) * numPixels));
+  checkCudaErrors(
+      cudaMemset(*d_blue_blurred, 0, sizeof(unsigned char) * numPixels));
 }
 
 void Image::postProcess(const std::string &output_file, uchar4 *data_ptr) {
-  cv::Mat output(numRows(), numCols(), CV_8UC4, (void *)data_ptr);
+  cv::Mat output(num_rows(), num_cols(), CV_8UC4, (void *)data_ptr);
 
   cv::Mat imageOutputBGR;
   cv::cvtColor(output, imageOutputBGR, cv::COLOR_RGBA2BGR);

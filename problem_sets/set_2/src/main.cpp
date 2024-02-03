@@ -19,26 +19,26 @@
 // We cannot include this as an header as it contains device code
 void your_gaussian_blur(
     const uchar4 *const h_inputImageRGBA, uchar4 *const d_inputImageRGBA,
-    uchar4 *const d_outputImageRGBA, const std::size_t numRows,
-    const std::size_t numCols, unsigned char const *const d_red,
+    uchar4 *const d_outputImageRGBA, const std::size_t num_rows,
+    const std::size_t num_cols, unsigned char const *const d_red,
     unsigned char const *const d_green, unsigned char const *const d_blue,
-    unsigned char *d_redBlurred, unsigned char *d_greenBlurred,
-    unsigned char *d_blueBlurred, const int filterWidth);
+    unsigned char *d_red_blurred, unsigned char *d_green_blurred,
+    unsigned char *d_blue_blurred, const int filter_width);
 
-void allocateMemoryAndCopyToGPU(const std::size_t numRowsImage,
-                                const std::size_t numColsImage,
+void allocateMemoryAndCopyToGPU(const std::size_t num_rowsImage,
+                                const std::size_t num_colsImage,
                                 const float *const h_filter,
-                                const std::size_t filterWidth, float *d_filter,
+                                const std::size_t filter_width, float *d_filter,
                                 unsigned char *d_red, unsigned char *d_green,
                                 unsigned char *d_blue);
 
 int main(int argc, char **argv) {
   uchar4 *h_inputImageRGBA, *d_inputImageRGBA;
   uchar4 *h_outputImageRGBA, *d_outputImageRGBA;
-  unsigned char *d_redBlurred, *d_greenBlurred, *d_blueBlurred;
+  unsigned char *d_red_blurred, *d_green_blurred, *d_blue_blurred;
 
   float *h_filter;
-  int filterWidth;
+  int filter_width;
 
   std::filesystem::path input_path;
   std::filesystem::path output_path;
@@ -109,22 +109,23 @@ int main(int argc, char **argv) {
 
   // load the image and give us our input and output pointers
   image.preProcess(&h_inputImageRGBA, &h_outputImageRGBA, &d_inputImageRGBA,
-                   &d_outputImageRGBA, &d_redBlurred, &d_greenBlurred,
-                   &d_blueBlurred, &h_filter, &filterWidth,
+                   &d_outputImageRGBA, &d_red_blurred, &d_green_blurred,
+                   &d_blue_blurred, &h_filter, &filter_width,
                    input_path.string());
 
   float *d_filter;
   unsigned char *d_red;
   unsigned char *d_green;
   unsigned char *d_blue;
-  allocateMemoryAndCopyToGPU(image.numRows(), image.numCols(), h_filter,
-                             filterWidth, d_filter, d_red, d_green, d_blue);
+  allocateMemoryAndCopyToGPU(image.num_rows(), image.num_cols(), h_filter,
+                             filter_width, d_filter, d_red, d_green, d_blue);
   GpuTimer timer;
   timer.Start();
   // call the students' code
   your_gaussian_blur(h_inputImageRGBA, d_inputImageRGBA, d_outputImageRGBA,
-                     image.numRows(), image.numCols(), d_red, d_green, d_blue,
-                     d_redBlurred, d_greenBlurred, d_blueBlurred, filterWidth);
+                     image.num_rows(), image.num_cols(), d_red, d_green, d_blue,
+                     d_red_blurred, d_green_blurred, d_blue_blurred,
+                     filter_width);
   timer.Stop();
   cudaDeviceSynchronize();
   checkCudaErrors(cudaGetLastError());
@@ -139,7 +140,7 @@ int main(int argc, char **argv) {
 
   // check results and output the blurred image
 
-  std::size_t numPixels = image.numRows() * image.numCols();
+  std::size_t numPixels = image.num_rows() * image.num_cols();
   // copy the output back to the host
   checkCudaErrors(cudaMemcpy(h_outputImageRGBA, image.d_outputImageRGBA__,
                              sizeof(uchar4) * numPixels,
@@ -147,21 +148,25 @@ int main(int argc, char **argv) {
 
   image.postProcess(output_path.string(), h_outputImageRGBA);
 
-  referenceCalculation(h_inputImageRGBA, h_outputImageRGBA, image.numRows(),
-                       image.numCols(), h_filter, filterWidth);
+  referenceCalculation(h_inputImageRGBA, h_outputImageRGBA, image.num_rows(),
+                       image.num_cols(), h_filter, filter_width);
 
   image.postProcess(reference_path.string(), h_outputImageRGBA);
 
   // Cheater easy way with OpenCV
   // image.generateReferenceImage(input_path.string(), reference_path.string(),
-  // filterWidth);
+  // filter_width);
 
   compareImages(reference_path.string(), output_path.string(), useEpsCheck,
                 per_pixel_error, global_error);
 
-  checkCudaErrors(cudaFree(d_redBlurred));
-  checkCudaErrors(cudaFree(d_greenBlurred));
-  checkCudaErrors(cudaFree(d_blueBlurred));
+  // Free allocated memory
+  checkCudaErrors(cudaFree(d_red));
+  checkCudaErrors(cudaFree(d_green));
+  checkCudaErrors(cudaFree(d_blue));
+  checkCudaErrors(cudaFree(d_red_blurred));
+  checkCudaErrors(cudaFree(d_green_blurred));
+  checkCudaErrors(cudaFree(d_blue_blurred));
 
   return 0;
 }

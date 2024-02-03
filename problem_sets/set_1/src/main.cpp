@@ -10,7 +10,7 @@
 #include <string>      // for string
 
 #include "../include/compare.hpp"         // for compareImages
-#include "../include/image.hpp"           // for numCols, numRows, postPro...
+#include "../include/image.hpp"           // for num_cols, num_rows, postPro...
 #include "../include/reference_calc.hpp"  // for referenceCalculation
 #include "../include/timer.hpp"           // for GpuTimer
 #include "../include/utils.hpp"           // for check, checkCudaErrors
@@ -18,8 +18,8 @@
 // Declare function found in student_func.cu
 // We cannot include this as an header as it contains device code
 void your_rgba_to_greyscale(uchar4 *const d_rgbaImage,
-                            unsigned char *const d_greyImage, size_t numRows,
-                            size_t numCols);
+                            unsigned char *const d_greyImage, size_t num_rows,
+                            size_t num_cols);
 
 int main(int argc, char **argv) {
   uchar4 *h_rgbaImage, *d_rgbaImage;
@@ -99,8 +99,8 @@ int main(int argc, char **argv) {
   GpuTimer timer;
   timer.Start();
   // call the students' code
-  your_rgba_to_greyscale(d_rgbaImage, d_greyImage, image.numRows(),
-                         image.numCols());
+  your_rgba_to_greyscale(d_rgbaImage, d_greyImage, image.num_rows(),
+                         image.num_cols());
   timer.Stop();
   cudaDeviceSynchronize();
   checkCudaErrors(cudaGetLastError());
@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
-  size_t numPixels = image.numRows() * image.numCols();
+  size_t numPixels = image.num_rows() * image.num_cols();
   checkCudaErrors(cudaMemcpy(h_greyImage, d_greyImage,
                              sizeof(unsigned char) * numPixels,
                              cudaMemcpyDeviceToHost));
@@ -122,8 +122,8 @@ int main(int argc, char **argv) {
   // check results and output the grey image
   image.postProcess(output_path.string(), h_greyImage);
 
-  referenceCalculation(h_rgbaImage, h_greyImage, image.numRows(),
-                       image.numCols());
+  referenceCalculation(h_rgbaImage, h_greyImage, image.num_rows(),
+                       image.num_cols());
 
   image.postProcess(reference_path.string(), h_greyImage);
 

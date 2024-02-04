@@ -170,32 +170,6 @@ __global__ void gaussian_blur(const unsigned char* const input_channel,
   //                A CUDA core being what runs a thread
   //                We should activate more threads than available CUDA cores as
   //                threads can be swapped in order to hide latency
-  //
-  //                We can see how well we are performing by checking
-  //                achieved throughput/bandwidth
-  //
-  //                Where the acheived throughput (measured before and after
-  //                the kernel) = 2*Bytes in image/time it took
-  //                We multiply with 2 as there will be at least be one read and
-  //                one write operation
-  //
-  //                For cinque_terre.gold we have 557x313 pixels per channel
-  //                if each pixel is a uchar, then it's one byte, so
-  //                2*Bytes in image (per channel) = 3.48682*1e5 bytes
-  //                WARNING: This is likely too little to measure
-  //                         the performance as we're also measuring the
-  //                         kernel launch overheads etc.
-  //                         To get a more realistic number either pick a larger
-  //                         image, or make the launch so that it loops over
-  //                         more data
-  //
-  //                Memory bandwidth for A100 40 GB
-  //                = 1555GB/sec = 1.555*1e12 bytes/s
-  //
-  //                We then get:
-  //                Performance
-  //                = (3.48682*1e5 bytes/time[s])/(1.555*1e12 bytes/s)
-  //                = 2.24232*1e-7/time
 
   // Image coordinates
   // We want to go from filter_abs_idx to image_abs_idx

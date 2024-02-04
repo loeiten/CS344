@@ -1,12 +1,13 @@
 #include <cuda_runtime.h>      // for cudaDeviceSynchronize
-#include <cuda_runtime_api.h>  // for cudaMemcpy, cudaGetLastError
-#include <driver_types.h>      // for cudaMemcpyDeviceToHost
+#include <cuda_runtime_api.h>  // for cudaMemcpy, cudaGetLastError, cudaGetDe...
+#include <driver_types.h>      // for cudaMemcpyDeviceToHost, cudaDeviceProp
 #include <stdio.h>             // for printf, size_t
 #include <stdlib.h>            // for atof, exit
 #include <vector_types.h>      // for uchar4
 
 #include <filesystem>  // for path, absolute
 #include <iostream>    // for operator<<, endl, basic_o...
+#include <map>         // for map
 #include <string>      // for string
 
 #include "../include/compare.hpp"         // for compareImages
@@ -105,7 +106,8 @@ int main(int argc, char **argv) {
   cudaDeviceSynchronize();
   checkCudaErrors(cudaGetLastError());
 
-  int err = printf("Your code ran in: %f msecs.\n", timer.Elapsed());
+  float elapsed_ms = timer.Elapsed();
+  int err = printf("Your code ran in: %f msecs.\n", elapsed_ms);
 
   if (err < 0) {
     // Couldn't print! Probably the student closed stdout - bad news
@@ -115,6 +117,64 @@ int main(int argc, char **argv) {
   }
 
   size_t numPixels = image.num_rows() * image.num_cols();
+
+  // Calculate performance compared to ideal
+  // We can see how well we are performing by checking achieved
+  // throughput/bandwidth
+  //
+  // WARNING: The cinque_terre image is likely too small to measure the
+  //          performance as we're also measuring the kernel launch overheads
+  //          etc.
+  //          To get a more realistic number either pick a larger image, or make
+  //          the launch so that it loops over more data
+  //
+  // The achieved throughput (measured before and after the kernel)
+  // = 2*Bytes in image/time it took
+  // We multiply with 2 as there will be at least be one read and one write
+  // operation
+  //
+  // NOTE: This assumes that the whole image is processed in one kernel on one
+  //       GPU
+  int bytes_processed = 2 * sizeof(uchar4) * numPixels;
+  // Memory bandwidth for the device
+  // From
+  // https://www.nvidia.com/content/dam/en-zz/Solutions/Data-Center/a100/pdf/nvidia-a100-datasheet-us-nvidia-1758950-r4-web.pdf
+  std::map<std::string, float> device_bw{{"NVIDIA A100-PG509-200", 1.555e9}};
+  int devCount;
+  bool calculate_performance = true;
+  cudaGetDeviceCount(&devCount);
+  std::string prev_name = "";
+  std::string name;
+  for (int i = 0; i < devCount; ++i) {
+    cudaDeviceProp props;
+    cudaGetDeviceProperties(&props, i);
+    name = props.name;
+    if (prev_name != "") {
+      if (prev_name != name) {
+        std::cerr << "Warning: There is a mix of devices, could not calculate "
+                     "the performance number"
+                  << std::endl;
+        calculate_performance = false;
+        break;
+      }
+    }
+    prev_name = name;
+  }
+  if (calculate_performance) {
+    if (device_bw.find(name) == device_bw.end()) {
+      std::cerr << "Warning: Do not know the memory bandwidth of " << name
+                << ", please look it up, and add it to device_bw" << std::endl;
+    } else {
+      float performance =
+          100 * (bytes_processed / (elapsed_ms / 1.0e3)) / (device_bw[name]);
+      std::cout << "Processed " << bytes_processed << " bytes in " << elapsed_ms
+                << " ms" << std::endl;
+      std::cout << "As the max bandwidth of the system is" << device_bw[name]
+                << "bytes/sec for " << name << ", this is " << performance
+                << "% of theoretical max" << std::endl;
+    }
+  }
+
   checkCudaErrors(cudaMemcpy(h_greyImage, d_greyImage,
                              sizeof(unsigned char) * numPixels,
                              cudaMemcpyDeviceToHost));

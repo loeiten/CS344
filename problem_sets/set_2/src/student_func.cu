@@ -188,11 +188,10 @@ __global__ void gaussian_blur(const unsigned char* const input_channel,
   int last_filter_idx = filter_width * filter_width - 1;
   // NOTE: The filter_width must be odd for there to be a one-celled mid-point
   int filter_mid = last_filter_idx / 2;
-  float center_value = 0;
   for (int filter_idx = 0; filter_idx <= last_filter_idx; ++filter_idx) {
     int filter_rel_col = filter_idx % filter_width - (filter_width - 1) / 2;
     int filter_rel_row =
-        (filter_abs_idx - filter_mid - filter_rel_col) / filter_width;
+        (filter_idx - filter_mid - filter_rel_col) / filter_width;
     int image_idx = filter_center_in_image_abs_idx + filter_rel_row * num_cols +
                     filter_rel_col;
     // NOTE: We have no contention when reading (as the values do not change)
@@ -312,10 +311,11 @@ void allocateMemoryAndCopyToGPU(const std::size_t num_rowsImage,
 void your_gaussian_blur(
     const uchar4* const h_inputImageRGBA, uchar4* const d_inputImageRGBA,
     uchar4* const d_outputImageRGBA, const std::size_t num_rows,
-    const std::size_t num_cols, unsigned char const* const d_red,
-    unsigned char const* const d_green, unsigned char const* const d_blue,
-    unsigned char* d_red_blurred, unsigned char* d_green_blurred,
-    unsigned char* d_blue_blurred, const int filter_width) {
+    const std::size_t num_cols, float const* const d_filter,
+    unsigned char const* const d_red, unsigned char const* const d_green,
+    unsigned char const* const d_blue, unsigned char* d_red_blurred,
+    unsigned char* d_green_blurred, unsigned char* d_blue_blurred,
+    const int filter_width) {
   // TODO: Set reasonable block size (i.e., number of threads per block)
   // Solution:
   // We set one thread per pixel, see ../../set_1/src/student_func.cu for
@@ -347,15 +347,12 @@ void your_gaussian_blur(
 
   // TODO: Call your convolution kernel here 3 times, once for each color
   // channel.
-  gaussian_blur < < < gridSize,
-      blockSize >>>>
-          (d_red, d_red_blurred, num_rows, num_cols, d_filter, filter_width);
-  gaussian_blur < < < gridSize,
-      blockSize >>>> (d_green, d_green_blurred, num_rows, num_cols, d_filter,
-                      filter_width);
-  gaussian_blur < < < gridSize,
-      blockSize >>>>
-          (d_blue, d_blue_blurred, num_rows, num_cols, d_filter, filter_width);
+  gaussian_blur<<<gridSize, blockSize>>>(d_red, d_red_blurred, num_rows,
+                                         num_cols, d_filter, filter_width);
+  gaussian_blur<<<gridSize, blockSize>>>(d_green, d_green_blurred, num_rows,
+                                         num_cols, d_filter, filter_width);
+  gaussian_blur<<<gridSize, blockSize>>>(d_blue, d_blue_blurred, num_rows,
+                                         num_cols, d_filter, filter_width);
 
   // Again, call cudaDeviceSynchronize(), then call checkCudaErrors()
   // immediately after launching your kernel to make sure that you didn't make

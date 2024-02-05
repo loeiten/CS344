@@ -57,9 +57,6 @@ __global__ void rgba_to_greyscale(const uchar4* const rgbaImage,
   // calculate a 1D offset
 
   // Solution:
-  // NOTE: This calculation could've been global
-  const int max_idx = num_rows * num_cols;
-
   // In our example with num_cols=5 and num_rows=3
   // We have blockDim.x = blockDim.y = 2
   // If we were to edit pixel with x=4, y=1 we be at blockIdx.x=1 as we are at

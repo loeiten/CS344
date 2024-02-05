@@ -20,10 +20,11 @@
 void your_gaussian_blur(
     const uchar4 *const h_inputImageRGBA, uchar4 *const d_inputImageRGBA,
     uchar4 *const d_outputImageRGBA, const std::size_t num_rows,
-    const std::size_t num_cols, unsigned char const *const d_red,
-    unsigned char const *const d_green, unsigned char const *const d_blue,
-    unsigned char *d_red_blurred, unsigned char *d_green_blurred,
-    unsigned char *d_blue_blurred, const int filter_width);
+    const std::size_t num_cols, float const *const d_filter,
+    unsigned char const *const d_red, unsigned char const *const d_green,
+    unsigned char const *const d_blue, unsigned char *d_red_blurred,
+    unsigned char *d_green_blurred, unsigned char *d_blue_blurred,
+    const int filter_width);
 
 void allocateMemoryAndCopyToGPU(const std::size_t num_rowsImage,
                                 const std::size_t num_colsImage,
@@ -113,19 +114,19 @@ int main(int argc, char **argv) {
                    &d_blue_blurred, &h_filter, &filter_width,
                    input_path.string());
 
-  float *d_filter;
-  unsigned char *d_red;
-  unsigned char *d_green;
-  unsigned char *d_blue;
+  float *d_filter = nullptr;
+  unsigned char *d_red = nullptr;
+  unsigned char *d_green = nullptr;
+  unsigned char *d_blue = nullptr;
   allocateMemoryAndCopyToGPU(image.num_rows(), image.num_cols(), h_filter,
                              filter_width, d_filter, d_red, d_green, d_blue);
   GpuTimer timer;
   timer.Start();
   // call the students' code
   your_gaussian_blur(h_inputImageRGBA, d_inputImageRGBA, d_outputImageRGBA,
-                     image.num_rows(), image.num_cols(), d_red, d_green, d_blue,
-                     d_red_blurred, d_green_blurred, d_blue_blurred,
-                     filter_width);
+                     image.num_rows(), image.num_cols(), d_filter, d_red,
+                     d_green, d_blue, d_red_blurred, d_green_blurred,
+                     d_blue_blurred, filter_width);
   timer.Stop();
   cudaDeviceSynchronize();
   checkCudaErrors(cudaGetLastError());

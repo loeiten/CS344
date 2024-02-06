@@ -1,17 +1,16 @@
-#include <cuda_runtime.h>      // for cudaDeviceSynchronize
-#include <cuda_runtime_api.h>  // for cudaMemcpy, cudaGetLastError, cudaGetDe...
-#include <driver_types.h>      // for cudaMemcpyDeviceToHost, cudaDeviceProp
-#include <stdio.h>             // for printf, size_t
-#include <stdlib.h>            // for atof, exit
-#include <vector_types.h>      // for uchar4
+#include <cuda_runtime.h>  // for cudaDeviceSynchronize, cuda...
+#include <driver_types.h>  // for cudaDeviceProp, cudaMemcpyD...
+#include <stdio.h>         // for printf, size_t
+#include <stdlib.h>        // for atof, exit
+#include <vector_types.h>  // for uchar4
 
-#include <filesystem>  // for path, absolute
-#include <iostream>    // for operator<<, endl, basic_o...
-#include <map>         // for map
-#include <string>      // for string
+#include <filesystem>  // for absolute, path, create_dire...
+#include <iostream>    // for operator<<, basic_ostream
+#include <map>         // for map, operator==, map<>::ite...
+#include <string>      // for string, allocator, operator+
 
 #include "../include/compare.hpp"         // for compareImages
-#include "../include/image.hpp"           // for num_cols, num_rows, postPro...
+#include "../include/image.hpp"           // for Image
 #include "../include/reference_calc.hpp"  // for referenceCalculation
 #include "../include/timer.hpp"           // for GpuTimer
 #include "../include/utils.hpp"           // for check, checkCudaErrors

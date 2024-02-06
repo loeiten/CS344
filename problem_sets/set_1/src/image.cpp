@@ -5,14 +5,16 @@
 #include <stdlib.h>        // for exit
 
 #include <cstddef>   // for size_t
+#include <cstring>   // for memcpy
 #include <iostream>  // for operator<<, endl, basic_ostream
-#include <string>    // for string, operator<<
+#include <string>    // for operator<<, string, allocator
 
 #include "../include/utils.hpp"          // for check, checkCudaErrors
 #include "opencv2/core/hal/interface.h"  // for CV_8UC1
 #include "opencv2/core/mat.inl.hpp"      // for _InputArray::_InputArray
 #include "opencv2/imgcodecs.hpp"         // for imread, imwrite, IMREAD_COLOR
 #include "opencv2/imgproc.hpp"           // for cvtColor, COLOR_BGR2RGBA
+#include "vector_types.h"                // for uchar4
 
 Image::~Image() {
   if (h_rgbaImage_ == nullptr) {

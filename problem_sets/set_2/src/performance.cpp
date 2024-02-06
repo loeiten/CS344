@@ -1,22 +1,13 @@
 #include "../include/performance.hpp"
 
-#include <cuda_runtime.h>  // for cudaFree, cudaDeviceSynchro...
-#include <stdio.h>         // for printf
-#include <stdlib.h>        // for atof, exit
+#include <cuda_runtime.h>  // for cudaGetDeviceCount, cudaGetDeviceProperties
 
-#include <cstddef>     // for size_t
-#include <filesystem>  // for absolute, path, create_dire...
-#include <iostream>    // for operator<<, endl, basic_ost...
-#include <string>      // for allocator, operator+, string
-#include <unordered_map>
+#include <cstddef>        // for size_t
+#include <iostream>       // for operator<<, basic_ostream, endl, basic_ost...
+#include <string>         // for string, basic_string, operator<<, hash
+#include <unordered_map>  // for unordered_map, operator==, unordered_map<>...
 
-#include "../include/compare.hpp"         // for compareImages
-#include "../include/image.hpp"           // for Image
-#include "../include/reference_calc.hpp"  // for referenceCalculation
-#include "../include/timer.hpp"           // for GpuTimer
-#include "../include/utils.hpp"           // for check, checkCudaErrors
-#include "driver_types.h"                 // for cudaMemcpyDeviceToHost
-#include "vector_types.h"                 // for uchar4
+#include "driver_types.h"  // for cudaDeviceProp
 
 void PrintPerformance(std::string kernel_name, std::size_t bytes_processed,
                       float time_in_ms) {

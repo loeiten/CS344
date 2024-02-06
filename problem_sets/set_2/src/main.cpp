@@ -7,9 +7,8 @@
 #include <iostream>    // for operator<<, endl, basic_ost...
 #include <string>      // for allocator, operator+, string
 
-#include "../include/compare.hpp"  // for compareImages
-#include "../include/image.hpp"    // for Image
-#include "../include/performance.hpp"
+#include "../include/compare.hpp"         // for compareImages
+#include "../include/image.hpp"           // for Image
 #include "../include/reference_calc.hpp"  // for referenceCalculation
 #include "../include/timer.hpp"           // for GpuTimer
 #include "../include/utils.hpp"           // for check, checkCudaErrors

@@ -4,8 +4,9 @@
 #include <math.h>          // for expf
 #include <stdlib.h>        // for exit
 
+#include <cstring>   // for memcpy
 #include <iostream>  // for operator<<, endl, basic_ostream
-#include <string>    // for string, operator<<
+#include <string>    // for operator<<, string, allocator
 
 #include "../include/utils.hpp"          // for check, checkCudaErrors
 #include "driver_types.h"                // for cudaMemcpyHostToDevice

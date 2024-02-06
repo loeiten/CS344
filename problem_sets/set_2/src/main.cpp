@@ -17,21 +17,24 @@
 
 // Declare function found in student_func.cu
 // We cannot include this as an header as it contains device code
-void your_gaussian_blur(
-    const uchar4 *const h_inputImageRGBA, uchar4 *const d_inputImageRGBA,
-    uchar4 *const d_outputImageRGBA, const std::size_t num_rows,
-    const std::size_t num_cols, float const *const d_filter,
-    unsigned char const *const d_red, unsigned char const *const d_green,
-    unsigned char const *const d_blue, unsigned char *d_red_blurred,
-    unsigned char *d_green_blurred, unsigned char *d_blue_blurred,
-    const int filter_width);
+void your_gaussian_blur(const uchar4 *const h_inputImageRGBA,
+                        uchar4 *const d_inputImageRGBA,
+                        uchar4 *const d_outputImageRGBA,
+                        const std::size_t num_rows, const std::size_t num_cols,
+                        float const *const d_filter, unsigned char *const d_red,
+                        unsigned char *const d_green,
+                        unsigned char *const d_blue,
+                        unsigned char *d_red_blurred,
+                        unsigned char *d_green_blurred,
+                        unsigned char *d_blue_blurred, const int filter_width);
 
 void allocateMemoryAndCopyToGPU(const std::size_t num_rowsImage,
                                 const std::size_t num_colsImage,
                                 const float *const h_filter,
-                                const std::size_t filter_width, float *d_filter,
-                                unsigned char *d_red, unsigned char *d_green,
-                                unsigned char *d_blue);
+                                const std::size_t filter_width,
+                                float **d_filter, unsigned char **d_red,
+                                unsigned char **d_green,
+                                unsigned char **d_blue);
 
 int main(int argc, char **argv) {
   uchar4 *h_inputImageRGBA, *d_inputImageRGBA;
@@ -118,8 +121,13 @@ int main(int argc, char **argv) {
   unsigned char *d_red = nullptr;
   unsigned char *d_green = nullptr;
   unsigned char *d_blue = nullptr;
+  // WARNING: If we do not pass a pointer here, the function will allocate to
+  //          the local variables inside the function.
+  //          In other words: As we pass by value then changes to the variables
+  //          inside the function will not affect the variables in the callee
   allocateMemoryAndCopyToGPU(image.num_rows(), image.num_cols(), h_filter,
-                             filter_width, d_filter, d_red, d_green, d_blue);
+                             filter_width, &d_filter, &d_red, &d_green,
+                             &d_blue);
   GpuTimer timer;
   timer.Start();
   // call the students' code

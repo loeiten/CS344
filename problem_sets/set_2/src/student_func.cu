@@ -370,6 +370,8 @@ void your_gaussian_blur(const uchar4* const h_inputImageRGBA,
   timer.Start();
   gaussian_blur<<<gridSize, blockSize>>>(d_red, d_red_blurred, num_rows,
                                          num_cols, d_filter, filter_width);
+  // Synch to ensure that kernel has completed
+  cudaDeviceSynchronize();
   timer.Stop();
   float elapsed_ms = timer.Elapsed();
   int bytes_processed = 2 * sizeof(char) * num_cols * num_rows;

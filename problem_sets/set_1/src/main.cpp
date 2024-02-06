@@ -129,7 +129,6 @@ int main(int argc, char **argv) {
 
   image.postProcess(reference_path.string(), h_greyImage);
 
-  // generateReferenceImage(input_path, reference_path);
   compareImages(reference_path, output_path, useEpsCheck, per_pixel_error,
                 global_error);
 

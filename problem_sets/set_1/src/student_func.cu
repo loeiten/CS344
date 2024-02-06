@@ -139,12 +139,12 @@ void your_rgba_to_greyscale(uchar4* const d_rgbaImage,
   timer.Start();
   rgba_to_greyscale<<<gridSize, blockSize>>>(d_rgbaImage, d_greyImage, num_rows,
                                              num_cols);
+  cudaDeviceSynchronize();
+  checkCudaErrors(cudaGetLastError());
+
   timer.Stop();
   float elapsed_ms = timer.Elapsed();
   int bytes_processed = 2 * sizeof(uchar4) * num_cols * num_rows;
   PrintPerformance("rgba_to_greyscale<<<gridSize, blockSize>>>",
                    bytes_processed, elapsed_ms);
-
-  cudaDeviceSynchronize();
-  checkCudaErrors(cudaGetLastError());
 }

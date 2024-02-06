@@ -366,16 +366,13 @@ void your_gaussian_blur(const uchar4* const h_inputImageRGBA,
   // = 2*Bytes in image/time it took
   // We multiply with 2 as there will be at least be one read and one write
   // operation
-  //
-  // NOTE: This assumes that the whole image is processed in one kernel on one
-  //       GPU
   GpuTimer timer;
   timer.Start();
   gaussian_blur<<<gridSize, blockSize>>>(d_red, d_red_blurred, num_rows,
                                          num_cols, d_filter, filter_width);
   timer.Stop();
   float elapsed_ms = timer.Elapsed();
-  int bytes_processed = 2 * sizeof(uchar4) * num_cols * num_rows;
+  int bytes_processed = 2 * sizeof(char) * num_cols * num_rows;
   PrintPerformance("gaussian_blur<<<gridSize, blockSize>>> - d_red",
                    bytes_processed, elapsed_ms);
 

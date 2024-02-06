@@ -15,6 +15,7 @@ SET_1_HEADER_FILES := $(wildcard $(SET_1_INCL_DIR)/*.hpp)
 SET_1_OBJ_FILES := $(SET_1_OBJ_DIR)/main.o \
 	$(SET_1_OBJ_DIR)/student_func.o \
 	$(SET_1_OBJ_DIR)/image.o \
+	$(SET_1_OBJ_DIR)/performance.o \
 	$(SET_1_OBJ_DIR)/compare.o \
 	$(SET_1_OBJ_DIR)/reference_calc.o
 
@@ -31,12 +32,17 @@ $(SET_1_OBJ_DIR)/main.o: $(SET_1_SRC_DIR)/main.cpp $(SET_1_HEADER_FILES)
 	mkdir -p $(SET_1_OBJ_DIR)
 	$(CXX) $(COMMON_FLAGS) $(CXX_LINT_FLAGS) $(CUDA_INCL) $(OPENCV_INCL) -c $< -o $@
 
-$(SET_1_OBJ_DIR)/student_func.o: $(SET_1_SRC_DIR)/student_func.cu $(SET_1_INCL_DIR)/utils.hpp
+$(SET_1_OBJ_DIR)/student_func.o: $(SET_1_SRC_DIR)/student_func.cu $(SET_1_INCL_DIR)/utils.hpp $(SET_1_INCL_DIR)/performance.hpp
 	$(call explain_build,Building the object file: $@)
 	mkdir -p $(SET_1_OBJ_DIR)
 	$(NVCC) $(COMMON_FLAGS) $(CUDA_INCL) $(NVCC_LINT_FLAGS) -c $< -o $@
 
 $(SET_1_OBJ_DIR)/image.o: $(SET_1_SRC_DIR)/image.cpp $(SET_1_INCL_DIR)/image.hpp
+	$(call explain_build,Building the object file: $@)
+	mkdir -p $(SET_1_OBJ_DIR)
+	$(CXX) $(COMMON_FLAGS) $(CXX_LINT_FLAGS) $(CUDA_INCL) $(OPENCV_INCL) -c $< -o $@
+
+$(SET_1_OBJ_DIR)/performance.o: $(SET_1_SRC_DIR)/performance.cpp $(SET_1_INCL_DIR)/performance.hpp
 	$(call explain_build,Building the object file: $@)
 	mkdir -p $(SET_1_OBJ_DIR)
 	$(CXX) $(COMMON_FLAGS) $(CXX_LINT_FLAGS) $(CUDA_INCL) $(OPENCV_INCL) -c $< -o $@

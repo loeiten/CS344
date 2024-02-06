@@ -38,7 +38,9 @@
 
 #include <cstddef>  // for size_t
 
-#include "../include/utils.hpp"  // for checkCudaErrors
+#include "../include/performance.hpp"  // for PrintPerformance
+#include "../include/timer.hpp"        // for GpuTimer
+#include "../include/utils.hpp"        // for checkCudaErrors
 
 __global__ void rgba_to_greyscale(const uchar4* const rgbaImage,
                                   unsigned char* const greyImage, int num_rows,
@@ -128,8 +130,20 @@ void your_rgba_to_greyscale(uchar4* const d_rgbaImage,
   // threads in total, but only 15 have to do actual work
   const dim3 gridSize(x_blocks, y_blocks, 1);
   const dim3 blockSize(max_threads_per_dim, max_threads_per_dim, 1);
+
+  // The achieved throughput (measured before and after the kernel)
+  // = 2*Bytes in image/time it took
+  // We multiply with 2 as there will be at least be one read and one write
+  // operation
+  GpuTimer timer;
+  timer.Start();
   rgba_to_greyscale<<<gridSize, blockSize>>>(d_rgbaImage, d_greyImage, num_rows,
                                              num_cols);
+  timer.Stop();
+  float elapsed_ms = timer.Elapsed();
+  int bytes_processed = 2 * sizeof(uchar4) * num_cols * num_rows;
+  PrintPerformance("rgba_to_greyscale<<<gridSize, blockSize>>>",
+                   bytes_processed, elapsed_ms);
 
   cudaDeviceSynchronize();
   checkCudaErrors(cudaGetLastError());

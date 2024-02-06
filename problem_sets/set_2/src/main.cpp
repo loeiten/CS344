@@ -7,8 +7,9 @@
 #include <iostream>    // for operator<<, endl, basic_ost...
 #include <string>      // for allocator, operator+, string
 
-#include "../include/compare.hpp"         // for compareImages
-#include "../include/image.hpp"           // for Image
+#include "../include/compare.hpp"  // for compareImages
+#include "../include/image.hpp"    // for Image
+#include "../include/performance.hpp"
 #include "../include/reference_calc.hpp"  // for referenceCalculation
 #include "../include/timer.hpp"           // for GpuTimer
 #include "../include/utils.hpp"           // for check, checkCudaErrors
@@ -138,7 +139,8 @@ int main(int argc, char **argv) {
   timer.Stop();
   cudaDeviceSynchronize();
   checkCudaErrors(cudaGetLastError());
-  int err = printf("Your code ran in: %f msecs.\n", timer.Elapsed());
+  float elapsed_ms = timer.Elapsed();
+  int err = printf("Your code ran in: %f msecs.\n", elapsed_ms);
 
   if (err < 0) {
     // Couldn't print! Probably the student closed stdout - bad news
@@ -147,9 +149,9 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
-  // check results and output the blurred image
-
   std::size_t numPixels = image.num_rows() * image.num_cols();
+
+  // check results and output the blurred image
   // copy the output back to the host
   checkCudaErrors(cudaMemcpy(h_outputImageRGBA, image.d_outputImageRGBA__,
                              sizeof(uchar4) * numPixels,

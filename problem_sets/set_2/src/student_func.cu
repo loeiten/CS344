@@ -112,7 +112,9 @@
 
 #include <cstddef>  // for size_t
 
-#include "../include/utils.hpp"  // for checkCudaErrors
+#include "../include/performance.hpp"  // for printPerformance
+#include "../include/timer.hpp"        // for GpuTimer
+#include "../include/utils.hpp"        // for checkCudaErrors
 
 __global__ void gaussian_blur(const unsigned char* const input_channel,
                               unsigned char* const output_channel, int num_rows,
@@ -191,24 +193,25 @@ __global__ void gaussian_blur(const unsigned char* const input_channel,
     int filter_rel_col = filter_idx % filter_width - (filter_width - 1) / 2;
     int filter_rel_row =
         (filter_idx - filter_mid - filter_rel_col) / filter_width;
-    // Make sure we are not out of bounds
+    // Clamp image:
+    // If we are out of bounds use the closest pixel with the filter value
     int filter_image_col = image_position_x + filter_rel_col;
     int filter_image_row = image_position_y + filter_rel_row;
-    if (((filter_image_col < 0) || (filter_image_col >= num_cols)) ||
-        ((filter_image_row < 0) || (filter_image_row >= num_rows))
+    filter_image_col = filter_image_col > 0 ? filter_image_col : 0;
+    filter_image_col =
+        filter_image_col < (num_cols - 1) ? filter_image_col : (num_cols - 1);
+    filter_image_row = filter_image_row > 0 ? filter_image_row : 0;
+    filter_image_row =
+        filter_image_row < (num_rows - 1) ? filter_image_row : (num_rows - 1);
 
-    ) {
-      continue;
-    }
-    int filter_in_image_idx =
-        image_idx + filter_rel_row * num_cols + filter_rel_col;
+    int filter_in_image_idx = filter_image_row * num_cols + filter_image_col;
     // NOTE: We have no contention when reading (as the values do not change)
     // and we have no contention when writing (as there is only one place
     // writing to the image). However, it is inefficient as threads are
     // re-reading the values of the input_channel and filter
     // filter_width*filter_width times
     image_value += static_cast<float>(input_channel[filter_in_image_idx]) *
-                   filter[filter_in_image_idx];
+                   filter[filter_idx];
   }
   output_channel[image_idx] = static_cast<unsigned char>(image_value);
 }
@@ -358,8 +361,24 @@ void your_gaussian_blur(const uchar4* const h_inputImageRGBA,
 
   // TODO: Call your convolution kernel here 3 times, once for each color
   // channel.
+
+  // The achieved throughput (measured before and after the kernel)
+  // = 2*Bytes in image/time it took
+  // We multiply with 2 as there will be at least be one read and one write
+  // operation
+  //
+  // NOTE: This assumes that the whole image is processed in one kernel on one
+  //       GPU
+  GpuTimer timer;
+  timer.Start();
   gaussian_blur<<<gridSize, blockSize>>>(d_red, d_red_blurred, num_rows,
                                          num_cols, d_filter, filter_width);
+  timer.Stop();
+  float elapsed_ms = timer.Elapsed();
+  int bytes_processed = 2 * sizeof(uchar4) * num_cols * num_rows;
+  PrintPerformance("gaussian_blur<<<gridSize, blockSize>>> - d_red",
+                   bytes_processed, elapsed_ms);
+
   gaussian_blur<<<gridSize, blockSize>>>(d_green, d_green_blurred, num_rows,
                                          num_cols, d_filter, filter_width);
   gaussian_blur<<<gridSize, blockSize>>>(d_blue, d_blue_blurred, num_rows,

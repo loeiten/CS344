@@ -8,8 +8,8 @@
 
 #include "driver_types.h"  // for cudaDeviceProp
 
-void PrintPerformance(std::string kernel_name, std::size_t bytes_processed,
-                      float time_in_ms) {
+void PrintPerformance(const std::string &kernel_name,
+                      std::size_t bytes_processed, float time_in_ms) {
   // Calculate performance compared to ideal
   // We can see how well we are performing by checking achieved
   // throughput/bandwidth
@@ -44,10 +44,11 @@ void PrintPerformance(std::string kernel_name, std::size_t bytes_processed,
     prev_device_name = device_name;
   }
   if (calculate_performance) {
-    // NOTE: Multiply with 2 for bidirectional, divide by 8 to get bytes from
-    // bits
+    // NOTE: Multiply with 2 for bidirectional
+    //       Divide by 8 to get bytes from bits
+    //       Multiply by 1.0e6 to go from kHz to Hz
     float max_bidirectional_bandwidth =
-        static_cast<float>(props.memoryBusWidth) *
+        static_cast<float>(props.memoryBusWidth) * 1.0e3 *
         static_cast<float>(props.memoryClockRate) * 2.0 / 8.0;
     float throughput =
         (static_cast<float>(bytes_processed) / (time_in_ms / 1.0e3));

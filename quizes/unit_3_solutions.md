@@ -47,3 +47,17 @@ Comments:
   result to be `1`
 - `4^(3^2) != (4^3)^2`
 - `8/(4/2) != (8/4)/2`
+
+## Quiz 3
+
+Which statements are true about a serial reduce code running an input size of
+size `n`?
+
+- [ ] It takes `n` operations
+- [x] It takes `n-1` operations
+- [x] Its work complexity is `O(n)`
+- [ ] Its step complexity is `O(1)`
+
+Comment:
+
+The step complexity is also `O(n)`

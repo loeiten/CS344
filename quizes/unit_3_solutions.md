@@ -61,3 +61,53 @@ size `n`?
 Comment:
 
 The step complexity is also `O(n)`
+
+## Quiz 4
+
+How do you rewrite `((a+b)+c)+d` to allow parallel execution?
+
+Answer:
+`(a+b)+(c+d)`
+
+## Quiz 5
+
+What is the step complexity of parallel reduction
+
+- [ ] `sqrt(n)`
+- [ ] `n`
+- [x] `log2(n)`
+- [ ] `n*log2(n)`
+
+Comment:
+
+This is assuming we have enough processors to our disposal, and can be seen by
+drawing the tree like so
+
+```text
+o   o   o   o   o   o   o   o  ...
+ \ /     \ /     \ /     \ /
+  o       o       o       o
+  |       |       |       |
+  \      /         \      /
+     o                o
+     |                |
+     \                /
+      ------   -------
+            \ /
+             o
+             |
+            ...
+```
+
+If there are fewer processor, we can use
+[Brent's theorem](https://link.springer.com/referenceworkentry/10.1007/978-0-387-09766-4_80)
+
+```text
+T_P <= T + ((N-T)/P)
+```
+
+where:
+
+- `T` is the time steps it will take if one had enough processors
+- `N` is the number of operations
+- `P` is the number of processors

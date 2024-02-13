@@ -2,8 +2,8 @@
 
 #include <cstddef>  // for size_t
 #include <iostream>
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
 
 // NOTE: This is automatically added by nvcc
 #include "cuda_runtime.h"  // for cudaFree, cudaMalloc, cudaMe...
@@ -66,9 +66,30 @@ __global__ void reduce_wo_shared_memory(float* d_out, float* d_in) {
 }
 
 __global__ void reduce_w_shared_memory(float* d_out, float* d_in) {
-  int idx = threadIdx.x;
-  float f = d_in[idx];
-  d_out[idx] = f * f * f;
+  // The shared data is allocated in the kernel call: 3rd arg of <<<b, t, shmem>>>
+  extern __shared__ float shared_data[];
+
+  int global_idx = threadIdx.x + blockDim.x * blockIdx.x;
+  int local_idx = threadIdx.x;
+
+  // Load the shared memory from the global memory
+  shared_data[local_idx] = d_in[global_idx];
+  // We must make sure that entire block is loaded
+  __syncthreads();  
+
+  // Now we will do the reduction in the shared memory
+  for (unsigned int s = blockDim.x / 2; s > 0; s >>= 1) {
+    if (local_idx < s) {
+      shared_data[local_idx] += shared_data[local_idx + s];
+    }
+    // We must make sure all adds at one stage are done
+    __syncthreads();  
+  }
+
+  // Write to output array, only thread 0 writes
+  if (local_idx == 0) {
+    d_out[blockIdx.x] = shared_data[0];
+  }
 }
 
 int main() {
@@ -104,7 +125,7 @@ int main() {
   cudaEvent_t start;
   cudaEvent_t stop;
   float elapsed_time;
-  std::size_t expected_result = array_size*(array_size+1)/2;
+  std::size_t expected_result = array_size * (array_size + 1) / 2;
 
   cudaEventCreate(&start);
   cudaEventCreate(&stop);
@@ -113,7 +134,8 @@ int main() {
   std::cout << "Reducing without using shared memory..." << std::endl;
   cudaEventRecord(start);
   reduce_wo_shared_memory<<<blocks, threads>>>(d_intermediate, d_in);
-  reduce_wo_shared_memory<<<blocks, threads>>>(d_out, d_intermediate);
+  // In the final reduce, we only need one block
+  reduce_wo_shared_memory<<<1, threads>>>(d_out, d_intermediate);
   cudaEventSynchronize(stop);
   cudaEventElapsedTime(&elapsed_time, start, stop);
   cudaMemcpy(h_out, d_out, array_bytes, cudaMemcpyDeviceToHost);
@@ -122,7 +144,7 @@ int main() {
   std::cout << "...it took " << elapsed_time << " ms" << std::endl;
 
   // Check the answer against the analytical result
-  if(expected_result != static_cast<std::size_t>(*h_out)){
+  if (expected_result != static_cast<std::size_t>(*h_out)) {
     std::stringstream ss;
     ss << "Expected " << expected_result << ", got " << *h_out << std::endl;
     throw std::runtime_error(ss.str());
@@ -132,12 +154,16 @@ int main() {
   checkCudaErrors(cudaMemset(d_intermediate, 0, array_bytes));
   checkCudaErrors(cudaMemset(d_out, 0, array_bytes));
   *h_out = 0.0;
+  elapsed_time = 0.0;
 
   // Run the shared memory kernel
   std::cout << "Reducing using shared memory" << std::endl;
   cudaEventRecord(start);
-  reduce_wo_shared_memory<<<blocks, threads>>>(d_intermediate, d_in);
-  reduce_wo_shared_memory<<<blocks, threads>>>(d_out, d_intermediate);
+  reduce_w_shared_memory<<<blocks, threads, threads * sizeof(float)>>>(
+      d_intermediate, d_in);
+  // In the final reduce, we only need one block
+  reduce_w_shared_memory<<<1, threads, threads * sizeof(float)>>>(
+      d_out, d_intermediate);
   cudaEventSynchronize(stop);
   cudaEventElapsedTime(&elapsed_time, start, stop);
   std::cout << "...it took " << elapsed_time << " ms" << std::endl;
@@ -145,7 +171,7 @@ int main() {
   cudaMemcpy(h_out, d_out, array_bytes, cudaMemcpyDeviceToHost);
 
   // Check for errors
-  if(expected_result != static_cast<std::size_t>(*h_out)){
+  if (expected_result != static_cast<std::size_t>(*h_out)) {
     std::stringstream ss;
     ss << "Expected " << expected_result << ", got " << *h_out << std::endl;
     throw std::runtime_error(ss.str());

@@ -114,35 +114,34 @@ int main() {
 
   // Allocate GPU memory
   checkCudaErrors(cudaMalloc((void**)&d_in, kArrayBytes));
-  checkCudaErrors(cudaMemset(d_in, 0, kArrayBytes));
+  checkCudaErrors(cudaMemset(d_in, 0, kArraySize));
   checkCudaErrors(cudaMalloc((void**)&d_intermediate, kArrayBytes));
-  checkCudaErrors(cudaMemset(d_intermediate, 0, kArrayBytes));
+  checkCudaErrors(cudaMemset(d_intermediate, 0, kArraySize));
   checkCudaErrors(cudaMalloc((void**)&d_out, sizeof(float)));
-  checkCudaErrors(cudaMemset(d_out, 0, kArrayBytes));
+  checkCudaErrors(cudaMemset(d_out, 0, 1));
 
   // Transfer the data to the GPU
-  cudaMemcpy(d_in, h_in, kArrayBytes, cudaMemcpyHostToDevice);
+  checkCudaErrors(cudaMemcpy(d_in, h_in, kArrayBytes, cudaMemcpyHostToDevice));
 
   cudaEvent_t start;
   cudaEvent_t stop;
   float elapsed_time;
   std::size_t expected_result = kArraySize * (kArraySize + 1) / 2;
 
-  cudaEventCreate(&start);
-  cudaEventCreate(&stop);
+  checkCudaErrors(cudaEventCreate(&start));
+  checkCudaErrors(cudaEventCreate(&stop));
 
   // Run the non-shared memory kernel
   std::cout << "Reducing without using shared memory..." << std::endl;
-  cudaEventRecord(start);
+  checkCudaErrors(cudaEventRecord(start));
   reduce_wo_shared_memory<<<kBlocks, kThreads>>>(d_intermediate, d_in);
   // In the final reduce, we only need one block
   reduce_wo_shared_memory<<<1, kThreads>>>(d_out, d_intermediate);
-  cudaEventSynchronize(stop);
-  cudaEventElapsedTime(&elapsed_time, start, stop);
-  cudaMemcpy(h_out, d_out, kArrayBytes, cudaMemcpyDeviceToHost);
+  checkCudaErrors(cudaEventSynchronize(stop));
+  checkCudaErrors(cudaEventElapsedTime(&elapsed_time, start, stop));
   std::cout << "...it took " << elapsed_time << " ms" << std::endl;
   // Copy back the result array to the CPU
-  std::cout << "...it took " << elapsed_time << " ms" << std::endl;
+  checkCudaErrors(cudaMemcpy(h_out, d_out, 1, cudaMemcpyDeviceToHost));
 
   // Check the answer against the analytical result
   if (expected_result != static_cast<std::size_t>(*h_out)) {
@@ -152,24 +151,24 @@ int main() {
   }
 
   // Reset the values
-  checkCudaErrors(cudaMemset(d_intermediate, 0, kArrayBytes));
-  checkCudaErrors(cudaMemset(d_out, 0, kArrayBytes));
+  checkCudaErrors(cudaMemset(d_intermediate, 0, kArraySize));
+  checkCudaErrors(cudaMemset(d_out, 0, 1));
   *h_out = 0.0;
   elapsed_time = 0.0;
 
   // Run the shared memory kernel
   std::cout << "Reducing using shared memory" << std::endl;
-  cudaEventRecord(start);
+  checkCudaErrors(cudaEventRecord(start));
   reduce_w_shared_memory<<<kBlocks, kThreads, kThreads * sizeof(float)>>>(
       d_intermediate, d_in);
   // In the final reduce, we only need one block
   reduce_w_shared_memory<<<1, kThreads, kThreads * sizeof(float)>>>(
       d_out, d_intermediate);
-  cudaEventSynchronize(stop);
-  cudaEventElapsedTime(&elapsed_time, start, stop);
+  checkCudaErrors(cudaEventSynchronize(stop));
+  checkCudaErrors(cudaEventElapsedTime(&elapsed_time, start, stop));
   std::cout << "...it took " << elapsed_time << " ms" << std::endl;
   // Copy back the result array to the CPU
-  cudaMemcpy(h_out, d_out, kArrayBytes, cudaMemcpyDeviceToHost);
+  checkCudaErrors(cudaMemcpy(h_out, d_out, 1, cudaMemcpyDeviceToHost));
 
   // Check for errors
   if (expected_result != static_cast<std::size_t>(*h_out)) {
@@ -179,8 +178,8 @@ int main() {
   }
 
   // Free GPU memory allocation
-  cudaEventDestroy(start);
-  cudaEventDestroy(stop);
-  cudaFree(d_in);
-  cudaFree(d_out);
+  checkCudaErrors(cudaEventDestroy(start));
+  checkCudaErrors(cudaEventDestroy(stop));
+  checkCudaErrors(cudaFree(d_in));
+  checkCudaErrors(cudaFree(d_out));
 }

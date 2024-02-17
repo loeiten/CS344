@@ -4,11 +4,12 @@
 #include <iostream>   // for cout, endl
 #include <sstream>    // for stringstream
 #include <stdexcept>  // for runtime_error
+#include <random>  // for random_device, mt19937, uniform_real_distribution
 
 // NOTE: This is automatically added by nvcc
 #include "cuda_runtime.h"  // for cudaFree, cudaMalloc, cudaMe...
 
-#define checkCudaErrors(val) check((val), #val, __FILE__, __LINE__)
+#define CheckCudaErrors(val) check((val), #val, __FILE__, __LINE__)
 
 template <typename T>
 void check(T err, const char* const func, const char* const file,
@@ -20,7 +21,7 @@ void check(T err, const char* const func, const char* const file,
   }
 }
 
-__global__ void reduce_wo_shared_memory(float* d_out, float* d_in) {
+__global__ void ReduceWoSharedMemory(float* d_out, float* d_in) {
   // Let's illustrate this kernel by setting blocks=4 and threads=4 on an array
   // with 16 elements:
   // The setup will look like this:
@@ -65,7 +66,7 @@ __global__ void reduce_wo_shared_memory(float* d_out, float* d_in) {
   }
 }
 
-__global__ void reduce_w_shared_memory(float* d_out, const float* d_in) {
+__global__ void ReduceWSharedMemory(float* d_out, const float* d_in) {
   // The shared data is allocated in the kernel call: 3rd arg of <<<b, t,
   // shmem>>>
   extern __shared__ float shared_data[];
@@ -93,6 +94,16 @@ __global__ void reduce_w_shared_memory(float* d_out, const float* d_in) {
   }
 }
 
+float GenerateRandomNumber() {
+    // NOTE: The static variables will only be called once
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    // We need should keep the numbers around the same order of 
+    // magnitude in order to prevent precision loss
+    static std::uniform_real_distribution<float> dis(-1.0, 1.0);
+    return dis(gen);
+}
+
 int main() {
   constexpr std::size_t kThreads = 1024;
   constexpr std::size_t kBlocks = 1024;
@@ -102,10 +113,12 @@ int main() {
   // Generate the input array on the host
   // NOTE: It would be faster to do this on the accelerator
   float h_in[kArraySize];
+  float expected_result = 0.0;
   for (std::size_t i = 0; i < kArraySize; ++i) {
-    h_in[i] = float(i);
+    h_in[i] = GenerateRandomNumber();
+    expected_result += h_in[i];
   }
-  float h_out[kArraySize];
+  float h_out[1];
 
   // Declare GPU memory pointers
   float* d_in;
@@ -113,35 +126,35 @@ int main() {
   float* d_out;
 
   // Allocate GPU memory
-  checkCudaErrors(cudaMalloc((void**)&d_in, kArrayBytes));
-  checkCudaErrors(cudaMemset(d_in, 0, kArraySize));
-  checkCudaErrors(cudaMalloc((void**)&d_intermediate, kArrayBytes));
-  checkCudaErrors(cudaMemset(d_intermediate, 0, kArraySize));
-  checkCudaErrors(cudaMalloc((void**)&d_out, sizeof(float)));
-  checkCudaErrors(cudaMemset(d_out, 0, 1));
+  CheckCudaErrors(cudaMalloc((void**)&d_in, kArrayBytes));
+  CheckCudaErrors(cudaMemset(d_in, 0, kArraySize));
+  CheckCudaErrors(cudaMalloc((void**)&d_intermediate, kArrayBytes));
+  CheckCudaErrors(cudaMemset(d_intermediate, 0, kArraySize));
+  CheckCudaErrors(cudaMalloc((void**)&d_out, sizeof(float)));
+  CheckCudaErrors(cudaMemset(d_out, 0, 1));
 
   // Transfer the data to the GPU
-  checkCudaErrors(cudaMemcpy(d_in, h_in, kArrayBytes, cudaMemcpyHostToDevice));
+  CheckCudaErrors(cudaMemcpy(d_in, h_in, kArrayBytes, cudaMemcpyHostToDevice));
 
   cudaEvent_t start;
   cudaEvent_t stop;
   float elapsed_time;
-  std::size_t expected_result = kArraySize * (kArraySize + 1) / 2;
 
-  checkCudaErrors(cudaEventCreate(&start));
-  checkCudaErrors(cudaEventCreate(&stop));
+  CheckCudaErrors(cudaEventCreate(&start));
+  CheckCudaErrors(cudaEventCreate(&stop));
 
   // Run the non-shared memory kernel
   std::cout << "Reducing without using shared memory..." << std::endl;
-  checkCudaErrors(cudaEventRecord(start));
-  reduce_wo_shared_memory<<<kBlocks, kThreads>>>(d_intermediate, d_in);
+  CheckCudaErrors(cudaEventRecord(start));
+  ReduceWoSharedMemory<<<kBlocks, kThreads>>>(d_intermediate, d_in);
   // In the final reduce, we only need one block
-  reduce_wo_shared_memory<<<1, kThreads>>>(d_out, d_intermediate);
-  checkCudaErrors(cudaEventSynchronize(stop));
-  checkCudaErrors(cudaEventElapsedTime(&elapsed_time, start, stop));
+  ReduceWoSharedMemory<<<1, kThreads>>>(d_out, d_intermediate);
+  CheckCudaErrors(cudaEventRecord(stop));
+  CheckCudaErrors(cudaEventSynchronize(stop));
+  CheckCudaErrors(cudaEventElapsedTime(&elapsed_time, start, stop));
   std::cout << "...it took " << elapsed_time << " ms" << std::endl;
   // Copy back the result array to the CPU
-  checkCudaErrors(cudaMemcpy(h_out, d_out, 1, cudaMemcpyDeviceToHost));
+  CheckCudaErrors(cudaMemcpy(h_out, d_out, 1, cudaMemcpyDeviceToHost));
 
   // Check the answer against the analytical result
   if (expected_result != static_cast<std::size_t>(*h_out)) {
@@ -151,24 +164,25 @@ int main() {
   }
 
   // Reset the values
-  checkCudaErrors(cudaMemset(d_intermediate, 0, kArraySize));
-  checkCudaErrors(cudaMemset(d_out, 0, 1));
+  CheckCudaErrors(cudaMemset(d_intermediate, 0, kArraySize));
+  CheckCudaErrors(cudaMemset(d_out, 0, 1));
   *h_out = 0.0;
   elapsed_time = 0.0;
 
   // Run the shared memory kernel
   std::cout << "Reducing using shared memory" << std::endl;
-  checkCudaErrors(cudaEventRecord(start));
-  reduce_w_shared_memory<<<kBlocks, kThreads, kThreads * sizeof(float)>>>(
+  CheckCudaErrors(cudaEventRecord(start));
+  ReduceWSharedMemory<<<kBlocks, kThreads, kThreads * sizeof(float)>>>(
       d_intermediate, d_in);
   // In the final reduce, we only need one block
-  reduce_w_shared_memory<<<1, kThreads, kThreads * sizeof(float)>>>(
+  ReduceWSharedMemory<<<1, kThreads, kThreads * sizeof(float)>>>(
       d_out, d_intermediate);
-  checkCudaErrors(cudaEventSynchronize(stop));
-  checkCudaErrors(cudaEventElapsedTime(&elapsed_time, start, stop));
+  CheckCudaErrors(cudaEventRecord(stop));
+  CheckCudaErrors(cudaEventSynchronize(stop));
+  CheckCudaErrors(cudaEventElapsedTime(&elapsed_time, start, stop));
   std::cout << "...it took " << elapsed_time << " ms" << std::endl;
   // Copy back the result array to the CPU
-  checkCudaErrors(cudaMemcpy(h_out, d_out, 1, cudaMemcpyDeviceToHost));
+  CheckCudaErrors(cudaMemcpy(h_out, d_out, 1, cudaMemcpyDeviceToHost));
 
   // Check for errors
   if (expected_result != static_cast<std::size_t>(*h_out)) {
@@ -178,8 +192,8 @@ int main() {
   }
 
   // Free GPU memory allocation
-  checkCudaErrors(cudaEventDestroy(start));
-  checkCudaErrors(cudaEventDestroy(stop));
-  checkCudaErrors(cudaFree(d_in));
-  checkCudaErrors(cudaFree(d_out));
+  CheckCudaErrors(cudaEventDestroy(start));
+  CheckCudaErrors(cudaEventDestroy(stop));
+  CheckCudaErrors(cudaFree(d_in));
+  CheckCudaErrors(cudaFree(d_out));
 }

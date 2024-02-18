@@ -1,10 +1,11 @@
 #include <device_launch_parameters.h>  // for blockIdx, threadIdx
 
+#include <cmath>      // for fabs, max
 #include <cstddef>    // for size_t
 #include <iostream>   // for cout, endl
+#include <random>     // for random_device, mt19937, uniform_real_distribution
 #include <sstream>    // for stringstream
 #include <stdexcept>  // for runtime_error
-#include <random>  // for random_device, mt19937, uniform_real_distribution
 
 // NOTE: This is automatically added by nvcc
 #include "cuda_runtime.h"  // for cudaFree, cudaMalloc, cudaMe...
@@ -21,7 +22,7 @@ void check(T err, const char* const func, const char* const file,
   }
 }
 
-__global__ void ReduceWoSharedMemory(float* d_out, float* d_in) {
+__global__ void ReduceWoSharedMemory(double* d_out, double* d_in) {
   // Let's illustrate this kernel by setting blocks=4 and threads=4 on an array
   // with 16 elements:
   // The setup will look like this:
@@ -66,10 +67,10 @@ __global__ void ReduceWoSharedMemory(float* d_out, float* d_in) {
   }
 }
 
-__global__ void ReduceWSharedMemory(float* d_out, const float* d_in) {
+__global__ void ReduceWSharedMemory(double* d_out, const double* d_in) {
   // The shared data is allocated in the kernel call: 3rd arg of <<<b, t,
   // shmem>>>
-  extern __shared__ float shared_data[];
+  extern __shared__ double shared_data[];
 
   int global_idx = threadIdx.x + blockDim.x * blockIdx.x;
   int local_idx = threadIdx.x;
@@ -94,43 +95,59 @@ __global__ void ReduceWSharedMemory(float* d_out, const float* d_in) {
   }
 }
 
-float GenerateRandomNumber() {
-    // NOTE: The static variables will only be called once
-    static std::random_device rd;
-    static std::mt19937 gen(rd());
-    // We need should keep the numbers around the same order of 
-    // magnitude in order to prevent precision loss
-    static std::uniform_real_distribution<float> dis(-1.0, 1.0);
-    return dis(gen);
+double GenerateRandomNumber() {
+  // NOTE: The static variables will only be called once
+  static std::random_device rd;
+  static std::mt19937 gen(rd());
+  // We need should keep the numbers around the same order of
+  // magnitude in order to prevent precision loss
+  static std::uniform_real_distribution<double> dis(-1.0, 1.0);
+  return dis(gen);
+}
+
+bool IsClose(double a, double b, double rel_tol = 1.0e-5,
+             double abs_tol = 1.0e-8) {
+  // Check if absolute difference is within absolute tolerance
+  if (std::fabs(a - b) <= abs_tol) {
+    return true;
+  }
+
+  // Check if relative difference is within relative tolerance
+  if (std::fabs(a - b) <= rel_tol * std::max(std::fabs(a), std::fabs(b))) {
+    return true;
+  }
+
+  return false;
 }
 
 int main() {
   constexpr std::size_t kThreads = 1024;
   constexpr std::size_t kBlocks = 1024;
   constexpr std::size_t kArraySize = kThreads * kBlocks;
-  constexpr std::size_t kArrayBytes = kArraySize * sizeof(float);
+  constexpr std::size_t kArrayBytes = kArraySize * sizeof(double);
 
   // Generate the input array on the host
-  // NOTE: It would be faster to do this on the accelerator
-  float h_in[kArraySize];
-  float expected_result = 0.0;
+  // NOTE: We use double in order to avoid loss of precision
+  double h_in[kArraySize];
+  double expected_result = 0.0;
   for (std::size_t i = 0; i < kArraySize; ++i) {
     h_in[i] = GenerateRandomNumber();
     expected_result += h_in[i];
   }
-  float h_out[1];
+  double h_out;
 
   // Declare GPU memory pointers
-  float* d_in;
-  float* d_intermediate;
-  float* d_out;
+  double* d_in;
+  double* d_intermediate;
+  double* d_out;
 
   // Allocate GPU memory
   CheckCudaErrors(cudaMalloc((void**)&d_in, kArrayBytes));
-  CheckCudaErrors(cudaMemset(d_in, 0, kArraySize));
   CheckCudaErrors(cudaMalloc((void**)&d_intermediate, kArrayBytes));
+  CheckCudaErrors(cudaMalloc((void**)&d_out, sizeof(double)));
+  // Zero out the memory
+  CheckCudaErrors(cudaMemset(d_in, 0, kArraySize));
   CheckCudaErrors(cudaMemset(d_intermediate, 0, kArraySize));
-  CheckCudaErrors(cudaMalloc((void**)&d_out, sizeof(float)));
   CheckCudaErrors(cudaMemset(d_out, 0, 1));
 
   // Transfer the data to the GPU
@@ -154,40 +171,42 @@ int main() {
   CheckCudaErrors(cudaEventElapsedTime(&elapsed_time, start, stop));
   std::cout << "...it took " << elapsed_time << " ms" << std::endl;
   // Copy back the result array to the CPU
-  CheckCudaErrors(cudaMemcpy(h_out, d_out, 1, cudaMemcpyDeviceToHost));
+  CheckCudaErrors(
+      cudaMemcpy(&h_out, d_out, sizeof(double), cudaMemcpyDeviceToHost));
 
   // Check the answer against the analytical result
-  if (expected_result != static_cast<std::size_t>(*h_out)) {
+  if (!IsClose(expected_result, h_out, 1e-2, 1e-1)) {
     std::stringstream ss;
-    ss << "Expected " << expected_result << ", got " << *h_out << std::endl;
+    ss << "Expected " << expected_result << ", got " << h_out << std::endl;
     throw std::runtime_error(ss.str());
   }
 
   // Reset the values
   CheckCudaErrors(cudaMemset(d_intermediate, 0, kArraySize));
   CheckCudaErrors(cudaMemset(d_out, 0, 1));
-  *h_out = 0.0;
+  h_out = 0.0;
   elapsed_time = 0.0;
 
   // Run the shared memory kernel
   std::cout << "Reducing using shared memory" << std::endl;
   CheckCudaErrors(cudaEventRecord(start));
-  ReduceWSharedMemory<<<kBlocks, kThreads, kThreads * sizeof(float)>>>(
+  ReduceWSharedMemory<<<kBlocks, kThreads, kThreads * sizeof(double)>>>(
       d_intermediate, d_in);
   // In the final reduce, we only need one block
-  ReduceWSharedMemory<<<1, kThreads, kThreads * sizeof(float)>>>(
+  ReduceWSharedMemory<<<1, kThreads, kThreads * sizeof(double)>>>(
       d_out, d_intermediate);
   CheckCudaErrors(cudaEventRecord(stop));
   CheckCudaErrors(cudaEventSynchronize(stop));
   CheckCudaErrors(cudaEventElapsedTime(&elapsed_time, start, stop));
   std::cout << "...it took " << elapsed_time << " ms" << std::endl;
   // Copy back the result array to the CPU
-  CheckCudaErrors(cudaMemcpy(h_out, d_out, 1, cudaMemcpyDeviceToHost));
+  CheckCudaErrors(
+      cudaMemcpy(&h_out, d_out, sizeof(double), cudaMemcpyDeviceToHost));
 
   // Check for errors
-  if (expected_result != static_cast<std::size_t>(*h_out)) {
+  if (!IsClose(expected_result, h_out, 1e-2, 1e-1)) {
     std::stringstream ss;
-    ss << "Expected " << expected_result << ", got " << *h_out << std::endl;
+    ss << "Expected " << expected_result << ", got " << h_out << std::endl;
     throw std::runtime_error(ss.str());
   }
 

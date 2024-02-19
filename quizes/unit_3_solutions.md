@@ -111,3 +111,34 @@ where:
 - `T` is the time steps it will take if one had enough processors
 - `N` is the number of operations
 - `P` is the number of processors
+
+## Quiz 6
+
+In [`3_reduction.cu`](../snippets/3_reduction.cu):
+How much more bandwidth does the global memory approach use as compared to the
+shared memory approach?
+
+Answer:
+
+3 times
+
+For the global approach we have the following traffic:
+
+| Read | Write |
+|------|-------|
+| 1024 | 512   |
+| 512  | 256   |
+| 256  | 128   |
+| ...  | ...   |
+| 1    | 1     |
+
+Summing up (`sum_0^inf(a/(2^n))=2a`), we find that for reducing `n` values we
+need `2n` reads and `n` writes.
+
+For the shared memory, we have the following traffic:
+
+| Read | Write |
+|------|-------|
+| 1024 | 1     |
+
+Summing up we find that for reducing `n` values we need `n` reads and `1` writes.

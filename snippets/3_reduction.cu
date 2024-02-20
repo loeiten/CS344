@@ -26,7 +26,7 @@ __global__ void ReduceWoSharedMemory(double* d_out, double* d_in) {
   // Let's illustrate this kernel by setting blocks=4 and threads=4 on an array
   // with 16 elements:
   // The setup will look like this:
-  //               Block 0 | Block 1 | Block 2   | Block 3
+  //               Block 0 | Block 1    | Block 2     | Block 3
   // ----------------------------------------------------------
   // Iteration 1:  s = 2. Note that only 0 and 1 is accessed
   //               0 1 2 3 | 4   5  6 7 | 8  9  10 11 | 12 13 14 15

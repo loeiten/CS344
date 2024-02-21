@@ -142,3 +142,17 @@ For the shared memory, we have the following traffic:
 | 1024 | 1     |
 
 Summing up we find that for reducing `n` values we need `n` reads and `1` writes.
+
+## Quiz 7
+
+What are is the identity for the
+
+1. Multiply operator
+1. The logical `OR` operator
+1. The logical `AND` operator
+
+Answer:
+
+1. `1`, since `a*1=a`
+1. `false` since `a || false = a`
+1. `true` since `a && true = a`

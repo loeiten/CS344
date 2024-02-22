@@ -156,3 +156,40 @@ Answer:
 1. `1`, since `a*1=a`
 1. `false` since `a || false = a`
 1. `true` since `a && true = a`
+
+## Quiz 8
+
+1. What is the identity of max-scan on unsigned ints
+1. The output of the max-scan on unsigned ints of the input
+  `[3, 1, 4, 1, 5, 9]`?
+
+Answer:
+
+1. `0`
+1. `[0, 3, 3, 4, 4, 5]`
+
+## Quiz 9
+
+Turn this serial implementation of inclusive scan
+
+```cpp
+int acc = identity;
+for(int i=0; i < elements.length(); ++i){
+  acc = op(acc, element[i]);
+  out[i] = acc;
+}
+```
+
+into exclusive scan
+
+Answer:
+
+```cpp
+int acc = identity;
+for(int i=0; i < elements.length(); ++i){
+  out[i] = acc;
+  acc = op(acc, element[i]);
+}
+```
+
+into an inclusive scan

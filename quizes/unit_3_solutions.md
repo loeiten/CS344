@@ -193,3 +193,30 @@ for(int i=0; i < elements.length(); ++i){
 ```
 
 into an inclusive scan
+
+## Quiz 10
+
+What is the step complexity of inclusive scan
+
+- [ ] `O(1)`
+- [x] `O(log n)`
+- [ ] `O(n)`
+- [ ] `O(n^2)`
+
+What is the work complexity of inclusive scan
+
+- [ ] `O(1)`
+- [ ] `O(log n)`
+- [ ] `O(n)`
+- [x] `O(n^2)`
+
+Comments:
+
+- The order of the step complexity is determined by the largest parallel reduce
+  we need to perform.
+  The step complexity of performing reduction of `n` elements is `n`, hence
+  the largest complexity becomes `O(log n)`
+- The work complexity can be found in by looking at all the reductions we need
+  to do.
+  First we need to do reduction for 1 element, then for 2, then for 3, as
+  `sum_{0}^{n-1} i` is approximately `n^2/2`, we end up with `O(n^2)`

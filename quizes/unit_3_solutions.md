@@ -196,14 +196,17 @@ into an inclusive scan
 
 ## Quiz 10
 
-What is the step complexity of inclusive scan
+There is an algorithm whereby the parallel inclusive scan can be found by
+performing successive reduction of each element
+
+What is the step complexity of this algorithm
 
 - [ ] `O(1)`
 - [x] `O(log n)`
 - [ ] `O(n)`
 - [ ] `O(n^2)`
 
-What is the work complexity of inclusive scan
+What is the work complexity of this algorithm
 
 - [ ] `O(1)`
 - [ ] `O(log n)`

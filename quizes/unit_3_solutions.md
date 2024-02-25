@@ -223,3 +223,32 @@ Comments:
   to do.
   First we need to do reduction for 1 element, then for 2, then for 3, as
   `sum_{0}^{n-1} i` is approximately `n^2/2`, we end up with `O(n^2)`
+
+## Quiz 11
+
+Let's turn our attention to
+[Hillis and Steele](https://en.wikipedia.org/wiki/Prefix_sum#Algorithm_1:_Shorter_span,_more_parallel)
+inclusive scan algorithm
+
+What is the step complexity of this algorithm
+
+- [x] `O(log n)`
+- [ ] `O(sqrt(n))`
+- [ ] `O(n)`
+- [ ] `O(n log n)`
+- [ ] `O(n^2)`
+
+What is the work complexity of this algorithm
+
+- [ ] `O(log n)`
+- [ ] `O(sqrt(n))`
+- [ ] `O(n)`
+- [x] `O(n log n)`
+- [ ] `O(n^2)`
+
+Comments:
+
+- As we are doubling the hops for each step, we will have `log n` steps
+- If one consider a matrix of all the computation being done in each step, we
+  see that we are either copying or adding `n` elements `n log n` times, hence
+  the complexity becomes `O(n log n)`

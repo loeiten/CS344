@@ -252,3 +252,31 @@ Comments:
 - If one consider a matrix of all the computation being done in each step, we
   see that we are either copying or adding `n` elements `n log n` times, hence
   the complexity becomes `O(n log n)`
+
+## Quiz 12
+
+Calculate the exclusive max scan of
+`[2, 1, 4, 3]`
+using the
+[Blelloch](https://people.cs.pitt.edu/~bmills/docs/teaching/cs1645/lecture_scan.pdf)
+exclusive scan algorithm
+
+Answer:
+
+```text
+2    1    4   3
+ \   |    \  |
+  [2]      [4]
+     \      |
+      \     |
+       \    |
+           [4]
+            |
+    2      [0]
+        //
+      //
+    //
+2 [0]     4 [2]
+ //        //
+[0] [2] [2] [4]
+```

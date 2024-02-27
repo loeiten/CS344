@@ -280,3 +280,42 @@ Answer:
  //        //
 [0] [2] [2] [4]
 ```
+
+## Quiz 13
+
+Which algorithm is most suited for the following scenarios
+
+512 elements vector with 512 processors
+
+- [ ] Serial
+- [x] Hillis Steele
+- [ ] Belloch
+
+1 M elements vector with 512 processors
+
+- [ ] Serial
+- [x] Hillis Steele
+- [ ] Belloch
+
+128k elements vector with 1 processor
+
+- [x] Serial
+- [ ] Hillis Steele
+- [ ] Belloch
+
+Comments:
+
+- We want a work efficient algorithm if we have a lot of data compared to the
+  the number of processors
+- We want a step efficient algorithm if we have little data, but a lot of
+  processors
+- The Hillis and Steele algorithm is step efficient (`O(log n)` step complexity
+  and `O(n log n)` work complexity)
+- The Blelloch algorithm is work efficient (`O(2 log n)` step complexity and
+  `O(n)` work complexity)
+- In the first scenario we have enough processors, so we would like a step
+  efficient algorithm
+- In the first scenario we more data than processors, so we would like a step
+  efficient algorithm
+- In the last scenario we only have one worker, so it would be best to use the
+  serial implementation

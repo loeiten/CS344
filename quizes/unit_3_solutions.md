@@ -319,3 +319,17 @@ Comments:
   efficient algorithm
 - In the last scenario we only have one worker, so it would be best to use the
   serial implementation
+
+## Quiz 14
+
+What is the operation we need to do on a histogram in order to get the
+cumulative distribution function?
+
+Answer:
+
+Exclusive scan
+
+Comment:
+
+This will answer the question:
+"When I'm index `i`, how many elements in the population comes before me"

@@ -333,3 +333,10 @@ Comment:
 
 This will answer the question:
 "When I'm index `i`, how many elements in the population comes before me"
+
+## Quiz 15
+
+Given `n` measurements and `b` bins, what is
+
+- [`n`] The maximum number of measurements per bin
+- [`n/b`] The average number of measurements per bin
